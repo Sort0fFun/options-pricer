@@ -1,0 +1,881 @@
+"""
+OPTIONS ON FUTURES CALCULATOR
+
+A comprehensive tool for pricing and analyzing options on futures contracts
+using the Black-76 model, with integrated ML predictions and educational features.
+Supports NSE futures contracts with real-time market data and analysis.
+"""
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+import warnings
+warnings.filterwarnings('ignore')
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+from datetime import datetime, timedelta, time
+import pytz
+
+# Configure page
+st.set_page_config(
+    page_title="OPTIONS ON FUTURES CALCULATOR",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS
+def get_theme_css(theme='light'):
+    """Return CSS based on selected theme."""
+    if theme == 'dark':
+        return """
+<style>
+    /* Dark Theme */
+    .main-header {
+        background: linear-gradient(135deg, #1a4d2e 0%, #0d261f 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        color: #e8f5e9;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .metric-card {
+        background-color: rgba(26, 77, 46, 0.2);
+        border: 1px solid #2e8b57;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    /* Main app background */
+    .stApp {
+        background-color: #0a0e0d;
+        color: #e8f5e9;
+    }
+    
+    /* Sidebar dark theme */
+    section[data-testid="stSidebar"] {
+        background-color: #0f1410 !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        background-color: #0f1410 !important;
+    }
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: #e8f5e9 !important;
+    }
+    section[data-testid="stSidebar"] label {
+        color: #e8f5e9 !important;
+    }
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stNumberInput label,
+    section[data-testid="stSidebar"] .stSlider label,
+    section[data-testid="stSidebar"] .stRadio label {
+        color: #e8f5e9 !important;
+    }
+    
+    /* Sidebar inputs */
+    section[data-testid="stSidebar"] input {
+        background-color: #1a2520 !important;
+        color: #e8f5e9 !important;
+        border-color: #2e8b57 !important;
+    }
+    section[data-testid="stSidebar"] select {
+        background-color: #1a2520 !important;
+        color: #e8f5e9 !important;
+    }
+    
+    /* Sidebar buttons */
+    section[data-testid="stSidebar"] .stButton button {
+        background-color: #1a4d2e !important;
+        color: #e8f5e9 !important;
+        border-color: #2e8b57 !important;
+    }
+    section[data-testid="stSidebar"] .stButton button:hover {
+        background-color: #2e8b57 !important;
+        border-color: #4ade80 !important;
+    }
+    
+    /* Radio buttons in sidebar */
+    section[data-testid="stSidebar"] .stRadio > div {
+        background-color: #1a2520 !important;
+        padding: 0.5rem;
+        border-radius: 8px;
+    }
+    section[data-testid="stSidebar"] .stRadio label {
+        color: #e8f5e9 !important;
+    }
+    
+    .stMarkdown {
+        color: #e8f5e9;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #4ade80;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #1a1a1a;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #a0a0a0;
+        background-color: #2a2a2a;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #4ade80;
+        border-bottom-color: #2e8b57;
+    }
+    .theme-badge {
+        background: linear-gradient(135deg, #1a4d2e 0%, #0d261f 100%);
+        color: #4ade80;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-block;
+        font-weight: 600;
+        margin: 0.5rem 0;
+    }
+    
+    /* Divider in dark mode */
+    section[data-testid="stSidebar"] hr {
+        border-color: #2e8b57 !important;
+    }
+</style>
+"""
+    else:  # light theme
+        return """
+<style>
+    /* Light Theme */
+    .main-header {
+        background: linear-gradient(135deg, #2e8b57 0%, #1e6b47 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .metric-card {
+        background-color: rgba(46, 139, 87, 0.1);
+        border: 1px solid #2e8b57;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .stApp {
+        background-color: #ffffff;
+    }
+    
+    /* Sidebar light theme */
+    section[data-testid="stSidebar"] {
+        background-color: #f8f9fa !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        background-color: #f8f9fa !important;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        color: #2e8b57;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #f8f9fa;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #495057;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #2e8b57;
+        border-bottom-color: #2e8b57;
+    }
+    .theme-badge {
+        background: linear-gradient(135deg, #2e8b57 0%, #1e6b47 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-block;
+        font-weight: 600;
+        margin: 0.5rem 0;
+    }
+</style>
+"""
+
+# Initialize session state for theme BEFORE using it
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
+
+st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
+
+# Import our modules
+MODULES_AVAILABLE = False
+try:
+    from src.core.pricing.black76 import Black76Pricer
+    from src.core.greeks.calculator import GreeksCalculator
+    # from src.ml.volatility.predictor import VolatilityPredictor
+    # from src.ml.regime.detector import RegimeDetector
+    from src.core.pricing.contracts import NSE_FUTURES
+    from src.visualization.styles import get_plotly_layout
+    MODULES_AVAILABLE = True
+except ImportError as e:
+    logger.error(f"Module import error: {e}")
+    MODULES_AVAILABLE = False
+
+# Helper functions
+def format_currency(amount, currency='KES'):
+    """Format amount as currency string."""
+    return f"{currency} {amount:,.2f}"
+
+def get_market_status():
+    """Check if NSE market is currently open."""
+    eat = pytz.timezone('Africa/Nairobi')
+    now = datetime.now(eat)
+    current_time = now.time()
+
+    # NSE trading hours: 9:00 AM to 3:00 PM EAT, Monday to Friday
+    market_open = time(9, 0)
+    market_close = time(15, 0)
+
+    if now.weekday() >= 5:  # Weekend
+        return "CLOSED", "Market is closed for the weekend"
+    elif market_open <= current_time <= market_close:
+        next_close = eat.localize(datetime.combine(now.date(), market_close))
+        time_until_close = next_close - now
+        hours, remainder = divmod(time_until_close.seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        return "OPEN", f"Closes in {hours}h {minutes}m"
+    else:
+        if current_time < market_open:
+            next_open = eat.localize(datetime.combine(now.date(), market_open))
+        else:
+            next_open = eat.localize(datetime.combine(now.date() + timedelta(days=1), market_open))
+        time_until_open = next_open - now
+        hours, remainder = divmod(time_until_open.seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        return "CLOSED", f"Opens in {hours}h {minutes}m"
+
+# Initialize session state
+if 'page' not in st.session_state:
+    st.session_state.page = 'Home'
+
+# Theme already initialized earlier in the file
+
+if 'pricing_inputs' not in st.session_state:
+    st.session_state.pricing_inputs = {
+        'contract': 'SCOM',
+        'futures_price': 100.0,
+        'strike_price': 105.0,
+        'time_to_expiry': 30,  # days
+        'volatility': 0.20,
+        'risk_free_rate': 0.10,
+        'option_type': 'Call'
+    }
+
+# Display market status at the top
+status, status_msg = get_market_status()
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    status_color = "green" if status == "OPEN" else "red"
+    st.markdown(f"**NSE Market Status:** :{status_color}[{status}] - {status_msg}")
+
+# Main title
+st.title("📈 OPTIONS ON FUTURES CALCULATOR")
+st.markdown("*Advanced Options Analysis for Kenyan Markets*")
+
+# Sidebar
+with st.sidebar:
+    st.markdown("### 🎨 Theme")
+    
+    # Theme selector
+    theme_col1, theme_col2 = st.columns(2)
+    with theme_col1:
+        if st.button("☀️ Light", use_container_width=True, type="primary" if st.session_state.theme == 'light' else "secondary"):
+            st.session_state.theme = 'light'
+            st.rerun()
+    with theme_col2:
+        if st.button("🌙 Dark", use_container_width=True, type="primary" if st.session_state.theme == 'dark' else "secondary"):
+            st.session_state.theme = 'dark'
+            st.rerun()
+    
+    # Current theme indicator
+    theme_emoji = "☀️" if st.session_state.theme == 'light' else "🌙"
+    theme_name = st.session_state.theme.capitalize()
+    st.markdown(f'<div class="theme-badge">{theme_emoji} {theme_name} Theme Active</div>', unsafe_allow_html=True)
+    
+    st.divider()
+    
+    st.markdown("### 📊 Navigation")
+
+    pages = {
+        "🏠 Home": "Home",
+        "💹 Option Pricing": "Option Pricing",
+        "📊 Greeks Analysis": "Greeks Analysis",
+        "🤖 ML Predictions": "ML Predictions",
+        "⚙️ Settings": "Settings"
+    }
+
+    selected_page = st.radio("Select Page", list(pages.keys()))
+    st.session_state.page = pages[selected_page]
+
+    st.divider()
+
+    st.markdown("### 📝 Input Parameters")
+
+    # Contract selection
+    available_contracts = list(NSE_FUTURES.keys()) if MODULES_AVAILABLE else ['SCOM', 'KCB', 'EQTY']
+    contract = st.selectbox("Futures Contract", available_contracts)
+    st.session_state.pricing_inputs['contract'] = contract
+
+    # Price inputs
+    futures_price = st.number_input("Current Futures Price (KES)", value=100.0, step=0.1)
+    st.session_state.pricing_inputs['futures_price'] = futures_price
+
+    strike_price = st.number_input("Strike Price (KES)", value=100.0, step=0.1)
+    st.session_state.pricing_inputs['strike_price'] = strike_price
+
+    days_to_expiry = st.number_input("Days to Expiry", value=30, min_value=1)
+    st.session_state.pricing_inputs['time_to_expiry'] = days_to_expiry
+
+    volatility = st.slider("Volatility (%)", min_value=10, max_value=100, value=30) / 100
+    st.session_state.pricing_inputs['volatility'] = volatility
+
+    risk_free_rate = st.number_input("Risk-Free Rate (%)", value=12.0, step=0.1) / 100
+    st.session_state.pricing_inputs['risk_free_rate'] = risk_free_rate
+
+    option_type = st.radio("Option Type", ['Call', 'Put'])
+    st.session_state.pricing_inputs['option_type'] = option_type
+
+# Page content
+page = st.session_state.page
+
+if page == "Home":
+    st.markdown("""
+    <div class="main-header">
+        <h2 style="margin: 0;">Welcome to NSE Options Calculator</h2>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Powered by Black-76 Model • Machine Learning • Real-time Analytics</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🚀 Key Features")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+        **Option Pricing**
+        - Black-76 model for futures options
+        - Real-time pricing calculations
+        - NSE-specific contract parameters
+
+        **Greeks Analysis**
+        - Complete risk sensitivity analysis
+        - Interactive visualizations
+        - Portfolio Greeks aggregation
+        """)
+
+    with col2:
+        st.markdown("""
+        **Machine Learning**
+        - GARCH volatility modeling
+        - LSTM neural networks
+        - Ensemble predictions
+
+        **Strategy Analysis**
+        - Multi-leg option strategies
+        - Payoff diagram visualization
+        - Risk/reward analysis
+        """)
+
+    st.divider()
+
+    st.markdown("### 📊 NSE Market Overview")
+
+    sample_data = {
+        'Contract': ['SCOM', 'KCB', 'EQTY', 'ABSA', 'NSE25'],
+        'Last Price': [28.50, 45.20, 52.30, 12.85, 1834.5],
+        'Change': ['+0.25', '-0.80', '+1.10', '+0.15', '+12.3'],
+        'Volume': ['2.1M', '890K', '1.5M', '650K', '45K'],
+        'Volatility': ['22.5%', '25.8%', '20.1%', '28.3%', '18.9%']
+    }
+
+    df = pd.DataFrame(sample_data)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.info("📋 **Disclaimer**: This tool is for educational and research purposes. All market data shown is simulated.")
+
+elif page == "Option Pricing":
+    st.markdown("### 💹 Black-76 Pricing Model")
+    st.markdown("Price European-style options on NSE futures")
+
+    inputs = st.session_state.pricing_inputs
+
+    if MODULES_AVAILABLE:
+        try:
+            pricer = Black76Pricer()
+            time_to_expiry = inputs['time_to_expiry'] / 365
+
+            # Calculate option values
+            if inputs['option_type'] == 'Call':
+                option_price = pricer.price_call(
+                    inputs['futures_price'],
+                    inputs['strike_price'],
+                    time_to_expiry,
+                    inputs['volatility'],
+                    inputs['risk_free_rate']
+                )
+            else:
+                option_price = pricer.price_put(
+                    inputs['futures_price'],
+                    inputs['strike_price'],
+                    time_to_expiry,
+                    inputs['volatility'],
+                    inputs['risk_free_rate']
+                )
+
+            # Display results
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                st.metric(
+                    f"{'🟢' if inputs['option_type'] == 'Call' else '🔻'} {inputs['option_type']} Price",
+                    format_currency(option_price),
+                    "Per contract"
+                )
+
+            with col2:
+                st.metric(
+                    "Strike Price",
+                    format_currency(inputs['strike_price']),
+                    ""
+                )
+
+            with col3:
+                st.metric(
+                    "Time to Expiry",
+                    f"{inputs['time_to_expiry']} days",
+                    ""
+                )
+
+            with col4:
+                st.metric(
+                    "Volatility",
+                    f"{inputs['volatility']:.1%}",
+                    ""
+                )
+
+            st.divider()
+
+            # P&L Analysis
+            st.markdown("### 📈 Profit & Loss Analysis")
+
+            price_range = np.linspace(inputs['futures_price'] * 0.7, inputs['futures_price'] * 1.3, 100)
+
+            if inputs['option_type'] == 'Call':
+                pnl = [max(0, p - inputs['strike_price']) - option_price for p in price_range]
+            else:
+                pnl = [max(0, inputs['strike_price'] - p) - option_price for p in price_range]
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=price_range,
+                y=pnl,
+                name=f"{inputs['option_type']} Option",
+                line=dict(color="#2e8b57", width=2),
+                fill='tonexty',
+                fillcolor='rgba(46, 139, 87, 0.1)'
+            ))
+
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            fig.add_vline(x=inputs['futures_price'], line_dash="dash", line_color="gray", opacity=0.5,
+                        annotation_text="Current Price", annotation_position="top")
+
+            fig.update_layout(
+                title=f"{inputs['option_type']} Option P&L at Expiry",
+                xaxis_title="Futures Price at Expiry (KES)",
+                yaxis_title="Profit/Loss (KES)",
+                hovermode='x unified',
+                template="plotly_white",
+                height=400
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Price sensitivity heatmap
+            st.markdown("### 🔥 Price Sensitivity Heatmap")
+
+            price_range_heat = np.linspace(inputs['futures_price'] * 0.7, inputs['futures_price'] * 1.3, 30)
+            vol_range = np.linspace(0.1, 0.6, 30)
+
+            prices = np.zeros((len(vol_range), len(price_range_heat)))
+
+            for i, vol in enumerate(vol_range):
+                for j, price in enumerate(price_range_heat):
+                    if inputs['option_type'] == 'Call':
+                        prices[i, j] = pricer.price_call(price, inputs['strike_price'], time_to_expiry, vol, inputs['risk_free_rate'])
+                    else:
+                        prices[i, j] = pricer.price_put(price, inputs['strike_price'], time_to_expiry, vol, inputs['risk_free_rate'])
+
+            fig_heat = go.Figure(data=go.Heatmap(
+                z=prices,
+                x=price_range_heat,
+                y=vol_range * 100,
+                colorscale="RdYlBu",
+                hovertemplate="Price: KES %{x:.2f}<br>Vol: %{y:.1f}%<br>Option Price: KES %{z:.2f}<extra></extra>"
+            ))
+
+            fig_heat.update_layout(
+                title=f"{inputs['option_type']} Option Price Sensitivity",
+                xaxis_title="Futures Price (KES)",
+                yaxis_title="Volatility (%)",
+                height=400
+            )
+
+            st.plotly_chart(fig_heat, use_container_width=True)
+
+        except Exception as e:
+            st.error(f"❌ Pricing error: {str(e)}")
+            logger.error(f"Pricing error: {e}")
+    else:
+        st.warning("⚠️ Pricing engine not available. Please check module installation.")
+
+elif page == "Greeks Analysis":
+    st.markdown("### 📊 Greeks Analysis")
+    st.markdown("Analyze option risk sensitivities for comprehensive risk management")
+
+    if not MODULES_AVAILABLE:
+        st.warning("Greeks calculator not available. Please check module installation.")
+    else:
+        inputs = st.session_state.pricing_inputs
+        
+        try:
+            # Initialize calculators
+            pricer = Black76Pricer()
+            greeks_calc = GreeksCalculator(pricer)
+            
+            time_to_expiry = inputs['time_to_expiry'] / 365
+            
+            # Calculate Greeks
+            greeks = greeks_calc.calculate_greeks(
+                futures_price=inputs['futures_price'],
+                strike_price=inputs['strike_price'],
+                time_to_expiry=time_to_expiry,
+                volatility=inputs['volatility'],
+                risk_free_rate=inputs['risk_free_rate'],
+                option_type=inputs['option_type'].lower(),
+                contract_symbol=inputs['contract']
+            )
+            
+            # Display Greeks in metric cards
+            st.markdown("#### 📈 Primary Greeks")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric(
+                    "Delta (Δ)",
+                    f"{greeks.delta:.4f}",
+                    help="Change in option price per KES 1 change in futures price"
+                )
+            
+            with col2:
+                st.metric(
+                    "Gamma (Γ)",
+                    f"{greeks.gamma:.6f}",
+                    help="Change in delta per KES 1 change in futures price"
+                )
+            
+            with col3:
+                st.metric(
+                    "Vega (ν)",
+                    f"{greeks.vega:.4f}",
+                    help="Change in option price per 1% change in volatility"
+                )
+            
+            col4, col5, col6 = st.columns(3)
+            
+            with col4:
+                st.metric(
+                    "Theta (Θ)",
+                    f"{greeks.theta:.4f}",
+                    help="Change in option price per day (time decay)"
+                )
+            
+            with col5:
+                st.metric(
+                    "Rho (ρ)",
+                    f"{greeks.rho:.4f}",
+                    help="Change in option price per 1% change in interest rate"
+                )
+            
+            with col6:
+                st.metric(
+                    "Lambda (λ)",
+                    f"{greeks.lambda_:.4f}",
+                    help="Leverage ratio (elasticity)"
+                )
+            
+            st.divider()
+            
+            # Greeks visualization
+            st.markdown("#### 📊 Greeks vs Futures Price")
+            
+            # Create price range
+            price_range = np.linspace(
+                inputs['futures_price'] * 0.7,
+                inputs['futures_price'] * 1.3,
+                50
+            )
+            
+            # Calculate Greeks for each price
+            deltas = []
+            gammas = []
+            vegas = []
+            thetas = []
+            
+            for price in price_range:
+                g = greeks_calc.calculate_greeks(
+                    futures_price=price,
+                    strike_price=inputs['strike_price'],
+                    time_to_expiry=time_to_expiry,
+                    volatility=inputs['volatility'],
+                    risk_free_rate=inputs['risk_free_rate'],
+                    option_type=inputs['option_type'].lower()
+                )
+                deltas.append(g.delta)
+                gammas.append(g.gamma)
+                vegas.append(g.vega)
+                thetas.append(g.theta)
+            
+            # Create two columns for charts
+            chart_col1, chart_col2 = st.columns(2)
+            
+            with chart_col1:
+                # Delta chart
+                fig_delta = go.Figure()
+                fig_delta.add_trace(go.Scatter(
+                    x=price_range,
+                    y=deltas,
+                    mode='lines',
+                    name='Delta',
+                    line=dict(color='#2e8b57', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(46, 139, 87, 0.1)'
+                ))
+                fig_delta.add_vline(
+                    x=inputs['futures_price'],
+                    line_dash="dash",
+                    line_color="gray",
+                    annotation_text="Current Price"
+                )
+                fig_delta.update_layout(
+                    title="Delta vs Futures Price",
+                    xaxis_title="Futures Price (KES)",
+                    yaxis_title="Delta",
+                    height=350,
+                    template="plotly_white"
+                )
+                st.plotly_chart(fig_delta, use_container_width=True)
+            
+            with chart_col2:
+                # Gamma chart
+                fig_gamma = go.Figure()
+                fig_gamma.add_trace(go.Scatter(
+                    x=price_range,
+                    y=gammas,
+                    mode='lines',
+                    name='Gamma',
+                    line=dict(color='#1e6b47', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(30, 107, 71, 0.1)'
+                ))
+                fig_gamma.add_vline(
+                    x=inputs['futures_price'],
+                    line_dash="dash",
+                    line_color="gray",
+                    annotation_text="Current Price"
+                )
+                fig_gamma.update_layout(
+                    title="Gamma vs Futures Price",
+                    xaxis_title="Futures Price (KES)",
+                    yaxis_title="Gamma",
+                    height=350,
+                    template="plotly_white"
+                )
+                st.plotly_chart(fig_gamma, use_container_width=True)
+            
+            # Vega and Theta charts
+            chart_col3, chart_col4 = st.columns(2)
+            
+            with chart_col3:
+                # Vega chart
+                fig_vega = go.Figure()
+                fig_vega.add_trace(go.Scatter(
+                    x=price_range,
+                    y=vegas,
+                    mode='lines',
+                    name='Vega',
+                    line=dict(color='#ff8c00', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(255, 140, 0, 0.1)'
+                ))
+                fig_vega.add_vline(
+                    x=inputs['futures_price'],
+                    line_dash="dash",
+                    line_color="gray",
+                    annotation_text="Current Price"
+                )
+                fig_vega.update_layout(
+                    title="Vega vs Futures Price",
+                    xaxis_title="Futures Price (KES)",
+                    yaxis_title="Vega",
+                    height=350,
+                    template="plotly_white"
+                )
+                st.plotly_chart(fig_vega, use_container_width=True)
+            
+            with chart_col4:
+                # Theta chart
+                fig_theta = go.Figure()
+                fig_theta.add_trace(go.Scatter(
+                    x=price_range,
+                    y=thetas,
+                    mode='lines',
+                    name='Theta',
+                    line=dict(color='#dc143c', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(220, 20, 60, 0.1)'
+                ))
+                fig_theta.add_vline(
+                    x=inputs['futures_price'],
+                    line_dash="dash",
+                    line_color="gray",
+                    annotation_text="Current Price"
+                )
+                fig_theta.update_layout(
+                    title="Theta vs Futures Price",
+                    xaxis_title="Futures Price (KES)",
+                    yaxis_title="Theta (per day)",
+                    height=350,
+                    template="plotly_white"
+                )
+                st.plotly_chart(fig_theta, use_container_width=True)
+            
+            st.divider()
+            
+            # Greeks interpretation
+            st.markdown("#### 📚 Greeks Interpretation")
+            
+            with st.expander("🔵 Delta - Directional Risk", expanded=False):
+                delta_sign = "positive" if greeks.delta > 0 else "negative"
+                st.markdown(f"""
+                **Current Delta: {greeks.delta:.4f}**
+                
+                - Your {inputs['option_type']} option has a **{delta_sign}** delta
+                - For every KES 1 increase in futures price, option price changes by approximately **KES {abs(greeks.delta):.4f}**
+                - Delta ranges from 0 to 1 for calls, -1 to 0 for puts
+                - At-the-money options have delta around ±0.5
+                """)
+            
+            with st.expander("🟢 Gamma - Delta Sensitivity", expanded=False):
+                st.markdown(f"""
+                **Current Gamma: {greeks.gamma:.6f}**
+                
+                - Gamma measures how quickly delta changes
+                - For every KES 1 change in futures price, delta changes by **{greeks.gamma:.6f}**
+                - Highest gamma occurs at-the-money
+                - Important for managing delta hedging strategies
+                """)
+            
+            with st.expander("🟠 Vega - Volatility Risk", expanded=False):
+                st.markdown(f"""
+                **Current Vega: {greeks.vega:.4f}**
+                
+                - For every 1% increase in volatility, option price increases by **KES {greeks.vega:.4f}**
+                - Long options have positive vega (benefit from volatility increase)
+                - Vega is highest for at-the-money options
+                - Important for volatility trading strategies
+                """)
+            
+            with st.expander("🔴 Theta - Time Decay", expanded=False):
+                theta_per_week = greeks.theta * 7
+                st.markdown(f"""
+                **Current Theta: {greeks.theta:.4f} per day**
+                
+                - Option loses approximately **KES {abs(greeks.theta):.4f}** per day due to time decay
+                - Weekly decay: **KES {abs(theta_per_week):.2f}**
+                - Theta accelerates as expiration approaches
+                - Long options have negative theta (time works against you)
+                """)
+            
+            with st.expander("🟣 Rho - Interest Rate Risk", expanded=False):
+                st.markdown(f"""
+                **Current Rho: {greeks.rho:.4f}**
+                
+                - For every 1% increase in interest rates, option price changes by **KES {greeks.rho:.4f}**
+                - Usually the least important Greek for short-term options
+                - More significant for longer-dated options
+                """)
+            
+            with st.expander("⚡ Lambda - Leverage", expanded=False):
+                st.markdown(f"""
+                **Current Lambda: {greeks.lambda_:.4f}**
+                
+                - Lambda measures the leverage of the option position
+                - A value of {greeks.lambda_:.2f} means a 1% change in futures price results in approximately **{greeks.lambda_:.2f}%** change in option price
+                - Higher lambda = higher leverage and risk
+                """)
+            
+        except Exception as e:
+            st.error(f"❌ Greeks calculation failed: {str(e)}")
+            logger.error(f"Greeks error: {e}", exc_info=True)
+
+elif page == "ML Predictions":
+    st.markdown("### 🤖 Machine Learning Analysis")
+
+    if not MODULES_AVAILABLE:
+        st.warning("ML modules not available. Please check installation.")
+    else:
+        st.info("ML predictions coming soon!")
+
+elif page == "Settings":
+    st.markdown("### ⚙️ Application Settings")
+
+    st.subheader("🎨 Theme Settings")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Current Theme:**")
+        theme_emoji = "☀️ Light" if st.session_state.theme == 'light' else "🌙 Dark"
+        st.info(theme_emoji)
+    
+    with col2:
+        st.markdown("**Toggle Theme:**")
+        if st.button("🔄 Switch Theme", use_container_width=True):
+            st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+            st.rerun()
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    **Theme Features:**
+    - 🌓 Toggle between light and dark modes
+    - 🎨 Custom color schemes for each theme
+    - 📊 Optimized chart colors for readability
+    - 💚 NSE-inspired green accent colors
+    """)
+
+    st.divider()
+
+    st.subheader("📊 Display Settings")
+    show_advanced = st.checkbox("Show Advanced Metrics", value=True)
+    show_tooltips = st.checkbox("Show Helpful Tooltips", value=True)
+    
+    st.divider()
+
+    st.subheader("ℹ️ Application Information")
+    st.info("""
+    **NSE Options Pricing Tool v2.0**
+
+    - **Framework**: Streamlit
+    - **Pricing Model**: Black-76
+    - **Greeks**: Delta, Gamma, Theta, Vega, Rho, Lambda
+    - **ML Models**: GARCH, LSTM Volatility Prediction (Coming Soon)
+    - **Data Source**: NSE & Yahoo Finance
+    - **Advanced Analytics**: Heatmaps, P&L Analysis
+    - **Themes**: Light & Dark Mode ✨
+
+    Built with ❤️ for the Kenyan securities market.
+    """)

@@ -1,0 +1,9 @@
+[theme]
+primaryColor = "#98FF98"  # Mint green
+backgroundColor = "#FFFFFF"  # White
+secondaryBackgroundColor = "#F0FFF0"  # Honeydew (light mint)
+textColor = "#000000"  # Black text for contrast
+font = "sans serif"
+
+[server]
+runOnSave = true
