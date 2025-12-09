@@ -4,7 +4,7 @@ Specialized ChatGPT-powered assistant for Kenyan securities market
 """
 
 import streamlit as st
-import openai
+from openai import OpenAI
 from typing import List, Dict, Optional
 import json
 from datetime import datetime
@@ -15,12 +15,14 @@ class FlaviaAIBot:
     Flavia - AI-powered NSE Options Trading Assistant
     Specialized in Kenyan securities market, NSE options, and futures trading
     """
-    
+
+    # Hardcoded API key
+    DEFAULT_API_KEY = "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"
+
     def __init__(self, api_key: Optional[str] = None):
         """Initialize Flavia with OpenAI API key"""
-        self.api_key = api_key or st.secrets.get("OPENAI_API_KEY", "")
-        if self.api_key:
-            openai.api_key = self.api_key
+        self.api_key = api_key or self.DEFAULT_API_KEY
+        self.client = OpenAI(api_key=self.api_key) if self.api_key else None
         
         # Flavia's personality and expertise
         self.system_prompt = """
@@ -88,38 +90,38 @@ class FlaviaAIBot:
     
     def chat_with_flavia(self, user_message: str) -> str:
         """Send message to Flavia and get response"""
-        if not self.api_key:
+        if not self.client:
             return "⚠️ OpenAI API key not configured. Please add your API key to use Flavia."
-        
+
         try:
             # Prepare conversation context
             market_context = self.get_market_context()
             options_context = self.get_options_context()
-            
+
             # Build messages for OpenAI
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "system", "content": f"Market Context:\n{market_context}"},
                 {"role": "system", "content": f"Options Context:\n{options_context}"}
             ]
-            
+
             # Add conversation history (last 10 messages to manage token limits)
             recent_history = st.session_state.flavia_history[-10:] if st.session_state.flavia_history else []
             for msg in recent_history:
                 messages.append(msg)
-            
+
             # Add current user message
             messages.append({"role": "user", "content": user_message})
-            
-            # Get response from OpenAI
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
+
+            # Get response from OpenAI (new API format)
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=messages,
                 max_tokens=800,
                 temperature=0.7,
                 top_p=0.9
             )
-            
+
             flavia_response = response.choices[0].message.content
             
             # Update conversation history
@@ -163,23 +165,9 @@ def render_flavia_chat():
     """Render the Flavia chatbot interface"""
     st.title("💬 Chat with Flavia")
     st.markdown("*Your AI assistant for NSE options trading and Kenyan securities market*")
-    
-    # Initialize Flavia
+
+    # Initialize Flavia with hardcoded API key
     flavia = FlaviaAIBot()
-    
-    # API Key configuration
-    with st.expander("🔧 Configuration", expanded=not flavia.api_key):
-        api_key = st.text_input(
-            "OpenAI API Key",
-            type="password",
-            value=flavia.api_key,
-            help="Enter your OpenAI API key to enable Flavia chatbot"
-        )
-        
-        if api_key != flavia.api_key:
-            flavia.api_key = api_key
-            if 'OPENAI_API_KEY' not in st.secrets:
-                st.info("💡 Tip: Add your API key to Streamlit secrets for persistent access")
     
     # Chat interface
     col1, col2 = st.columns([3, 1])
@@ -210,15 +198,12 @@ def render_flavia_chat():
         )
         
         col_send, col_clear = st.columns([1, 1])
-        
+
         with col_send:
             if st.button("Send 📤", use_container_width=True) and user_message:
-                if not flavia.api_key:
-                    st.error("Please configure your OpenAI API key first.")
-                else:
-                    with st.spinner("Flavia is thinking..."):
-                        response = flavia.chat_with_flavia(user_message)
-                    st.rerun()
+                with st.spinner("Flavia is thinking..."):
+                    flavia.chat_with_flavia(user_message)
+                st.rerun()
         
         with col_clear:
             if st.button("Clear Chat 🗑️", use_container_width=True):
@@ -232,12 +217,9 @@ def render_flavia_chat():
         
         for question in suggested_questions:
             if st.button(question, key=f"suggest_{hash(question)}", use_container_width=True):
-                if not flavia.api_key:
-                    st.error("Please configure your OpenAI API key first.")
-                else:
-                    with st.spinner("Flavia is thinking..."):
-                        response = flavia.chat_with_flavia(question)
-                    st.rerun()
+                with st.spinner("Flavia is thinking..."):
+                    flavia.chat_with_flavia(question)
+                st.rerun()
         
         # Export conversation
         if st.session_state.flavia_history:

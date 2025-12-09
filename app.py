@@ -204,6 +204,7 @@ st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 
 # Import our modules
 MODULES_AVAILABLE = False
+CHATBOT_AVAILABLE = False
 try:
     from src.core.pricing.black76 import Black76Pricer
     from src.core.greeks.calculator import GreeksCalculator
@@ -215,6 +216,13 @@ try:
 except ImportError as e:
     logger.error(f"Module import error: {e}")
     MODULES_AVAILABLE = False
+
+try:
+    from src.web.chatbot import FlaviaAIBot, render_flavia_chat
+    CHATBOT_AVAILABLE = True
+except ImportError as e:
+    logger.error(f"Chatbot import error: {e}")
+    CHATBOT_AVAILABLE = False
 
 # Helper functions
 def format_currency(amount, currency='KES'):
@@ -306,6 +314,7 @@ with st.sidebar:
         "💹 Option Pricing": "Option Pricing",
         "📊 Greeks Analysis": "Greeks Analysis",
         "🤖 ML Predictions": "ML Predictions",
+        "💬 Flavia AI": "Flavia AI",
         "⚙️ Settings": "Settings"
     }
 
@@ -351,36 +360,180 @@ if page == "Home":
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🚀 Key Features")
-    col1, col2 = st.columns(2)
+    # Get current inputs for pricing
+    inputs = st.session_state.pricing_inputs
 
-    with col1:
-        st.markdown("""
-        **Option Pricing**
-        - Black-76 model for futures options
-        - Real-time pricing calculations
-        - NSE-specific contract parameters
+    if MODULES_AVAILABLE:
+        # Initialize pricer and calculate prices
+        pricer = Black76Pricer()
+        time_to_expiry = inputs['time_to_expiry'] / 365
 
-        **Greeks Analysis**
-        - Complete risk sensitivity analysis
-        - Interactive visualizations
-        - Portfolio Greeks aggregation
-        """)
+        call_price = pricer.price_call(
+            inputs['futures_price'],
+            inputs['strike_price'],
+            time_to_expiry,
+            inputs['volatility'],
+            inputs['risk_free_rate']
+        )
+        put_price = pricer.price_put(
+            inputs['futures_price'],
+            inputs['strike_price'],
+            time_to_expiry,
+            inputs['volatility'],
+            inputs['risk_free_rate']
+        )
 
-    with col2:
-        st.markdown("""
-        **Machine Learning**
-        - GARCH volatility modeling
-        - LSTM neural networks
-        - Ensemble predictions
+        # Black-76 Pricing Model Summary Section
+        st.markdown("### Black-76 Pricing Model")
 
-        **Strategy Analysis**
-        - Multi-leg option strategies
-        - Payoff diagram visualization
-        - Risk/reward analysis
-        """)
+        # Summary metrics bar
+        summary_cols = st.columns(5)
+        with summary_cols[0]:
+            st.markdown("**Current Asset Price**")
+            st.markdown(f"**{inputs['futures_price']:.4f}**")
+        with summary_cols[1]:
+            st.markdown("**Strike Price**")
+            st.markdown(f"**{inputs['strike_price']:.4f}**")
+        with summary_cols[2]:
+            st.markdown("**Time to Maturity (Years)**")
+            st.markdown(f"**{time_to_expiry:.4f}**")
+        with summary_cols[3]:
+            st.markdown("**Volatility (σ)**")
+            st.markdown(f"**{inputs['volatility']:.4f}**")
+        with summary_cols[4]:
+            st.markdown("**Risk-Free Interest Rate**")
+            st.markdown(f"**{inputs['risk_free_rate']:.4f}**")
 
-    st.divider()
+        # Call and Put value boxes
+        value_cols = st.columns(2)
+        with value_cols[0]:
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1e6b7b 0%, #2e8b9b 100%);
+                        padding: 1.5rem; border-radius: 10px; text-align: center;">
+                <p style="margin: 0; color: white; font-size: 0.9rem;">CALL Value</p>
+                <h2 style="margin: 0.5rem 0 0 0; color: white;">${call_price:.2f}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+        with value_cols[1]:
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #8b2e4d 0%, #a04060 100%);
+                        padding: 1.5rem; border-radius: 10px; text-align: center;">
+                <p style="margin: 0; color: white; font-size: 0.9rem;">PUT Value</p>
+                <h2 style="margin: 0.5rem 0 0 0; color: white;">${put_price:.2f}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("")  # Spacing
+
+        # Options Price - Interactive Heatmap Section
+        st.markdown("### Options Price - Interactive Heatmap")
+        st.info("Explore how option prices fluctuate with varying 'Spot Prices and Volatility' levels using interactive heatmap parameters, all while maintaining a constant 'Strike Price'.")
+
+        # Heatmap Parameters Expander
+        with st.expander("Heatmap Parameters", expanded=False):
+            hm_param_cols = st.columns(2)
+            with hm_param_cols[0]:
+                min_spot = st.number_input(
+                    "Min Spot Price",
+                    value=float(inputs['futures_price'] * 0.8),
+                    step=0.01,
+                    format="%.2f",
+                    key="hm_min_spot"
+                )
+                max_spot = st.number_input(
+                    "Max Spot Price",
+                    value=float(inputs['futures_price'] * 1.2),
+                    step=0.01,
+                    format="%.2f",
+                    key="hm_max_spot"
+                )
+            with hm_param_cols[1]:
+                min_vol_hm = st.slider(
+                    "Min Volatility for Heatmap",
+                    min_value=0.05,
+                    max_value=0.50,
+                    value=0.14,
+                    step=0.01,
+                    format="%.2f",
+                    key="hm_min_vol"
+                )
+                max_vol_hm = st.slider(
+                    "Max Volatility for Heatmap",
+                    min_value=0.15,
+                    max_value=1.0,
+                    value=0.41,
+                    step=0.01,
+                    format="%.2f",
+                    key="hm_max_vol"
+                )
+
+        # Generate heatmap data
+        spot_range = np.linspace(min_spot, max_spot, 12)
+        vol_range = np.linspace(min_vol_hm, max_vol_hm, 10)
+
+        call_prices_grid = np.zeros((len(vol_range), len(spot_range)))
+        put_prices_grid = np.zeros((len(vol_range), len(spot_range)))
+
+        for i, vol in enumerate(vol_range):
+            for j, spot in enumerate(spot_range):
+                call_prices_grid[i, j] = pricer.price_call(
+                    spot, inputs['strike_price'], time_to_expiry, vol, inputs['risk_free_rate']
+                )
+                put_prices_grid[i, j] = pricer.price_put(
+                    spot, inputs['strike_price'], time_to_expiry, vol, inputs['risk_free_rate']
+                )
+
+        # Create side-by-side heatmaps
+        heatmap_cols = st.columns(2)
+
+        with heatmap_cols[0]:
+            st.markdown("**Call Price Heatmap**")
+            fig_call = go.Figure(data=go.Heatmap(
+                z=call_prices_grid,
+                x=np.round(spot_range, 2),
+                y=np.round(vol_range, 2),
+                colorscale='Viridis',
+                text=np.round(call_prices_grid, 2),
+                texttemplate='%{text}',
+                textfont={"size": 10, "color": "white"},
+                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Call Price: $%{z:.2f}<extra></extra>',
+                colorbar=dict(title="Price")
+            ))
+            fig_call.update_layout(
+                title=dict(text="CALL", x=0.5, font=dict(size=18)),
+                xaxis_title="",
+                yaxis_title="Volatility",
+                height=600,
+                template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
+                margin=dict(l=60, r=20, t=50, b=40)
+            )
+            st.plotly_chart(fig_call, use_container_width=True)
+
+        with heatmap_cols[1]:
+            st.markdown("**Put Price Heatmap**")
+            fig_put = go.Figure(data=go.Heatmap(
+                z=put_prices_grid,
+                x=np.round(spot_range, 2),
+                y=np.round(vol_range, 2),
+                colorscale='Viridis',
+                text=np.round(put_prices_grid, 2),
+                texttemplate='%{text}',
+                textfont={"size": 10, "color": "white"},
+                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Put Price: $%{z:.2f}<extra></extra>',
+                colorbar=dict(title="Price")
+            ))
+            fig_put.update_layout(
+                title=dict(text="PUT", x=0.5, font=dict(size=18)),
+                xaxis_title="",
+                yaxis_title="Volatility",
+                height=600,
+                template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
+                margin=dict(l=60, r=20, t=50, b=40)
+            )
+            st.plotly_chart(fig_put, use_container_width=True)
+
+    else:
+        st.warning("Pricing engine not available. Please check module installation.")
 
     st.markdown("### 📊 NSE Market Overview")
 
@@ -829,6 +982,62 @@ elif page == "ML Predictions":
         st.warning("ML modules not available. Please check installation.")
     else:
         st.info("ML predictions coming soon!")
+
+elif page == "Flavia AI":
+    if CHATBOT_AVAILABLE:
+        render_flavia_chat()
+    else:
+        st.markdown("### 💬 Flavia AI Chatbot")
+
+        # Fallback simple chat interface with hardcoded API key
+        FLAVIA_API_KEY = "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"
+
+        # Initialize session state for chat
+        if 'flavia_history' not in st.session_state:
+            st.session_state.flavia_history = []
+
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=FLAVIA_API_KEY)
+
+            st.info("👋 Hi! I'm Flavia, your NSE options trading assistant. Ask me anything about options trading, market analysis, or Kenyan securities!")
+
+            # Display chat history
+            for msg in st.session_state.flavia_history:
+                if msg["role"] == "user":
+                    st.markdown(f"**You:** {msg['content']}")
+                else:
+                    st.markdown(f"**Flavia:** {msg['content']}")
+
+            # Chat input
+            user_input = st.text_input("Ask Flavia:", key="flavia_input_fallback")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Send", use_container_width=True) and user_input:
+                    with st.spinner("Flavia is thinking..."):
+                        try:
+                            response = client.chat.completions.create(
+                                model="gpt-4o-mini",
+                                messages=[
+                                    {"role": "system", "content": "You are Flavia, an AI expert on NSE options trading and Kenyan securities market."},
+                                    {"role": "user", "content": user_input}
+                                ],
+                                max_tokens=500
+                            )
+                            flavia_response = response.choices[0].message.content
+                            st.session_state.flavia_history.append({"role": "user", "content": user_input})
+                            st.session_state.flavia_history.append({"role": "assistant", "content": flavia_response})
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {str(e)}")
+
+            with col2:
+                if st.button("Clear Chat", use_container_width=True):
+                    st.session_state.flavia_history = []
+                    st.rerun()
+        except ImportError:
+            st.error("OpenAI library not installed. Run: pip install openai")
 
 elif page == "Settings":
     st.markdown("### ⚙️ Application Settings")
