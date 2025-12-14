@@ -98,8 +98,26 @@ def get_theme_css(theme='light'):
         color: #e8f5e9 !important;
         border-color: #2e8b57 !important;
     }
+    section[data-testid="stSidebar"] input::placeholder {
+        color: #a0b8a8 !important;
+        opacity: 1 !important;
+    }
     section[data-testid="stSidebar"] select {
         background-color: #1a2520 !important;
+        color: #e8f5e9 !important;
+    }
+    
+    /* Main content text inputs in dark mode */
+    .stTextInput input {
+        background-color: #1a2520 !important;
+        color: #e8f5e9 !important;
+        border-color: #2e8b57 !important;
+    }
+    .stTextInput input::placeholder {
+        color: #a0b8a8 !important;
+        opacity: 1 !important;
+    }
+    .stTextInput label {
         color: #e8f5e9 !important;
     }
     
@@ -205,6 +223,22 @@ def get_theme_css(theme='light'):
     section[data-testid="stSidebar"] hr {
         border-color: #2e8b57 !important;
     }
+    
+    /* Mobile Responsive Styles - Dark Mode */
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 1rem !important;
+        }
+        .main-header h2 {
+            font-size: 1.2rem !important;
+        }
+        .header-container {
+            padding: 0.5rem !important;
+        }
+        .header-brand {
+            font-size: 0.9rem !important;
+        }
+    }
 </style>
 """
     else:  # light theme
@@ -295,6 +329,26 @@ def get_theme_css(theme='light'):
         display: inline-block;
         font-weight: 600;
         margin: 0.5rem 0;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 1rem !important;
+        }
+        .main-header h2 {
+            font-size: 1.2rem !important;
+        }
+        .header-container {
+            padding: 0.5rem !important;
+        }
+        .header-brand {
+            font-size: 0.9rem !important;
+        }
+        /* Stack columns on mobile */
+        [data-testid="column"] {
+            min-width: 100% !important;
+        }
     }
 </style>
 """
@@ -713,19 +767,19 @@ if page == "Home":
                 colorscale='Viridis',
                 text=np.round(call_prices_grid, 2),
                 texttemplate='%{text}',
-                textfont={"size": 10, "color": "white"},
-                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Call Price: $%{z:.2f}<extra></extra>',
-                colorbar=dict(title="Price")
+                textfont={"size": 8, "color": "white"},
+                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Call Price: KES %{z:.2f}<extra></extra>',
+                colorbar=dict(title=dict(text="Price", side="right"))
             ))
             fig_call.update_layout(
-                title=dict(text="CALL", x=0.5, font=dict(size=18)),
-                xaxis_title="",
+                title=dict(text="CALL", x=0.5, font=dict(size=16)),
+                xaxis_title="Spot Price",
                 yaxis_title="Volatility",
-                height=600,
+                height=450,
                 template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
-                margin=dict(l=60, r=20, t=50, b=40)
+                margin=dict(l=50, r=20, t=60, b=50)
             )
-            st.plotly_chart(fig_call, use_container_width=True)
+            st.plotly_chart(fig_call, use_container_width=True, config={'displayModeBar': False})
 
         with heatmap_cols[1]:
             st.markdown("**Put Price Heatmap**")
@@ -736,19 +790,19 @@ if page == "Home":
                 colorscale='Viridis',
                 text=np.round(put_prices_grid, 2),
                 texttemplate='%{text}',
-                textfont={"size": 10, "color": "white"},
-                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Put Price: $%{z:.2f}<extra></extra>',
-                colorbar=dict(title="Price")
+                textfont={"size": 8, "color": "white"},
+                hovertemplate='Spot: %{x:.2f}<br>Vol: %{y:.2f}<br>Put Price: KES %{z:.2f}<extra></extra>',
+                colorbar=dict(title=dict(text="Price", side="right"))
             ))
             fig_put.update_layout(
-                title=dict(text="PUT", x=0.5, font=dict(size=18)),
-                xaxis_title="",
+                title=dict(text="PUT", x=0.5, font=dict(size=16)),
+                xaxis_title="Spot Price",
                 yaxis_title="Volatility",
-                height=600,
+                height=450,
                 template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
-                margin=dict(l=60, r=20, t=50, b=40)
+                margin=dict(l=50, r=20, t=60, b=50)
             )
-            st.plotly_chart(fig_put, use_container_width=True)
+            st.plotly_chart(fig_put, use_container_width=True, config={'displayModeBar': False})
 
     else:
         st.warning("Pricing engine not available. Please check module installation.")
@@ -756,11 +810,10 @@ if page == "Home":
     st.markdown("### NSE Market Overview")
 
     sample_data = {
-        'Contract': ['SCOM', 'KCB', 'EQTY', 'ABSA', 'NSE25'],
-        'Last Price': [28.50, 45.20, 52.30, 12.85, 1834.5],
-        'Change': ['+0.25', '-0.80', '+1.10', '+0.15', '+12.3'],
-        'Volume': ['2.1M', '890K', '1.5M', '650K', '45K'],
-        'Volatility': ['22.5%', '25.8%', '20.1%', '28.3%', '18.9%']
+        'Contract': ['SCOM', 'EQTY', 'KCBG', 'EABL', 'BATK', 'ABSA', 'NCBA', 'COOP', 'SCBK', 'IMHP', 'N25I'],
+        'Name': ['Safaricom', 'Equity Group', 'KCB Group', 'EA Breweries', 'BAT Kenya', 'ABSA Kenya', 'NCBA Group', 'Co-op Bank', 'Stanchart', 'I&M Holdings', 'NSE 25 Index'],
+        'MTM Price': [28.21, 60.13, 56.84, 230.45, 437.40, 22.05, 78.17, 22.00, 287.60, 45.45, 3155.58],
+        'Sector': ['Telecom', 'Banking', 'Banking', 'Manufacturing', 'Manufacturing', 'Banking', 'Banking', 'Banking', 'Banking', 'Banking', 'Index']
     }
 
     df = pd.DataFrame(sample_data)
