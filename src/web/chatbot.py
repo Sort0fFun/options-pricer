@@ -91,7 +91,7 @@ class FlaviaAIBot:
     def chat_with_flavia(self, user_message: str) -> str:
         """Send message to Flavia and get response"""
         if not self.client:
-            return "⚠️ OpenAI API key not configured. Please add your API key to use Flavia."
+            return "OpenAI API key not configured. Please add your API key to use Flavia."
 
         try:
             # Prepare conversation context
@@ -131,7 +131,7 @@ class FlaviaAIBot:
             return flavia_response
             
         except Exception as e:
-            return f"⚠️ Error communicating with Flavia: {str(e)}"
+            return f"Error communicating with Flavia: {str(e)}"
     
     def get_suggested_questions(self) -> List[str]:
         """Get suggested questions for users"""
@@ -162,8 +162,61 @@ class FlaviaAIBot:
 
 
 def render_flavia_chat():
-    """Render the Flavia chatbot interface"""
-    st.title("💬 Chat with Flavia")
+    """Render the Flavia chatbot interface with dark mode support"""
+    
+    # Add dark mode CSS for chat
+    if 'theme' in st.session_state and st.session_state.theme == 'dark':
+        st.markdown("""
+        <style>
+        /* Dark mode chat styling */
+        .stMarkdown p, .stMarkdown {
+            color: #e8f5e9 !important;
+        }
+        .stTextInput input {
+            background-color: #1a2520 !important;
+            color: #e8f5e9 !important;
+            border-color: #2e8b57 !important;
+        }
+        .stTextInput label {
+            color: #e8f5e9 !important;
+        }
+        .chat-message-user {
+            background-color: #1a4d2e;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            color: #e8f5e9;
+        }
+        .chat-message-assistant {
+            background-color: #0f1a15;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            border: 1px solid #2e8b57;
+            color: #e8f5e9;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <style>
+        .chat-message-user {
+            background-color: #e8f5e9;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+        }
+        .chat-message-assistant {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            border: 1px solid #e0e0e0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    st.title("Chat with Flavia")
     st.markdown("*Your AI assistant for NSE options trading and Kenyan securities market*")
 
     # Initialize Flavia with hardcoded API key
@@ -181,14 +234,11 @@ def render_flavia_chat():
             if st.session_state.flavia_history:
                 for i, message in enumerate(st.session_state.flavia_history):
                     if message["role"] == "user":
-                        st.markdown(f"**You:** {message['content']}")
+                        st.markdown(f'<div class="chat-message-user"><strong>You:</strong> {message["content"]}</div>', unsafe_allow_html=True)
                     else:
-                        st.markdown(f"**Flavia:** {message['content']}")
-                    
-                    if i < len(st.session_state.flavia_history) - 1:
-                        st.markdown("---")
+                        st.markdown(f'<div class="chat-message-assistant"><strong>Flavia:</strong> {message["content"]}</div>', unsafe_allow_html=True)
             else:
-                st.info("👋 Hi! I'm Flavia, your NSE options trading assistant. Ask me anything about options trading, market analysis, or Kenyan securities!")
+                st.info("Hi! I'm Flavia, your NSE options trading assistant. Ask me anything about options trading, market analysis, or Kenyan securities!")
         
         # Message input
         user_message = st.text_input(
@@ -200,13 +250,13 @@ def render_flavia_chat():
         col_send, col_clear = st.columns([1, 1])
 
         with col_send:
-            if st.button("Send 📤", use_container_width=True) and user_message:
+            if st.button("Send", use_container_width=True) and user_message:
                 with st.spinner("Flavia is thinking..."):
                     flavia.chat_with_flavia(user_message)
                 st.rerun()
         
         with col_clear:
-            if st.button("Clear Chat 🗑️", use_container_width=True):
+            if st.button("Clear Chat", use_container_width=True):
                 flavia.clear_conversation()
                 st.rerun()
     
@@ -226,10 +276,10 @@ def render_flavia_chat():
             st.markdown("---")
             st.subheader("Export")
             
-            if st.button("💾 Export Chat", use_container_width=True):
+            if st.button("Export Chat", use_container_width=True):
                 conversation_json = flavia.export_conversation()
                 st.download_button(
-                    "📄 Download JSON",
+                    "Download JSON",
                     conversation_json,
                     file_name=f"flavia_chat_{datetime.now().strftime('%Y%m%d_%H%M')}.json",
                     mime="application/json",

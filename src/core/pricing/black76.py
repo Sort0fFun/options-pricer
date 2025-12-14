@@ -7,6 +7,26 @@ on futures contracts, specifically adapted for the Nairobi Securities Exchange.
 The Black-76 model extends the Black-Scholes framework to handle futures contracts
 by using the futures price directly and discounting the entire payoff at the 
 risk-free rate.
+
+Black-76 Formulas:
+    Call: C = e^(-r*T) * [F * N(d1) - K * N(d2)]
+    Put:  P = e^(-r*T) * [K * N(-d2) - F * N(-d1)]
+    
+    Where:
+        d1 = [ln(F/K) + (sigma^2/2)*T] / (sigma * sqrt(T))
+        d2 = d1 - sigma * sqrt(T)
+        
+        F = current underlying forward/futures price
+        K = strike price
+        r = continuously compounded risk-free interest rate
+        T = time in years until expiration
+        sigma = implied volatility for the underlying forward price
+        N() = standard normal cumulative distribution function
+
+Reference:
+    Black, Fischer (1976). The pricing of commodity contracts, 
+    Journal of Financial Economics, 3, 167-179.
+    https://www.glynholton.com/notes/black_1976/
 """
 
 import numpy as np
