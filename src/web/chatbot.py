@@ -177,6 +177,10 @@ def render_flavia_chat():
             color: #e8f5e9 !important;
             border-color: #2e8b57 !important;
         }
+        .stTextInput input::placeholder {
+            color: #a0b8a8 !important;
+            opacity: 1 !important;
+        }
         .stTextInput label {
             color: #e8f5e9 !important;
         }
