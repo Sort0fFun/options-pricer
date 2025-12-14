@@ -12,7 +12,7 @@ def initialize_chat_history():
             {
                 "role": "assistant",
                 "content": (
-                    "👋 Hello! I'm Flavia, your derivatives market specialist. "
+                    "Hello! I'm Flavia, your derivatives market specialist. "
                     "I'm here to help you understand options, futures, and derivatives trading in the NSE market. "
                     "I can explain everything from basic concepts to advanced trading strategies. "
                     "What would you like to learn about today?"
@@ -22,7 +22,7 @@ def initialize_chat_history():
 
 def show_education_page():
     """Display the options education page with AI chatbot."""
-    st.title("Options Education Hub with Flavia 🎓")
+    st.title("Options Education Hub with Flavia")
     
     initialize_chat_history()
     
@@ -57,7 +57,7 @@ def show_education_page():
     st.markdown(f"### {topic}")
     st.markdown("""
     <div style='background-color: #1E1E1E; padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
-        <h4 style='color: #00FF00; margin: 0;'>👋 How can I help you today?</h4>
+        <h4 style='color: #00FF00; margin: 0;'>How can I help you today?</h4>
         <p style='color: #CCCCCC; margin-top: 10px;'>
             Ask me anything about options trading, NSE markets, or specific strategies.
             I'm here to help you understand the complexities of derivatives trading!
@@ -67,7 +67,7 @@ def show_education_page():
     
     # Chat interface with improved styling
     for message in st.session_state.chat_history:
-        with st.chat_message(message["role"], avatar="🧑" if message["role"] == "user" else "🤖"):
+        with st.chat_message(message["role"], avatar=None):
             st.markdown(message["content"])
     
     # Chat input with enhanced response generation

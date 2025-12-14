@@ -23,9 +23,9 @@ import pytz
 # Configure page
 st.set_page_config(
     page_title="OPTIONS ON FUTURES CALCULATOR",
-    page_icon="📈",
+    page_icon="chart_with_upwards_trend",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Custom CSS
@@ -54,6 +54,22 @@ def get_theme_css(theme='light'):
     .stApp {
         background-color: #0a0e0d;
         color: #e8f5e9;
+    }
+    
+    /* Header styling for dark mode */
+    .header-container {
+        background: linear-gradient(135deg, #0d261f 0%, #1a4d2e 100%) !important;
+    }
+    
+    /* Navigation buttons in dark mode */
+    .stButton button {
+        background-color: transparent !important;
+        border: 1px solid #2e8b57 !important;
+        color: #e8f5e9 !important;
+    }
+    .stButton button:hover {
+        background-color: rgba(46, 139, 87, 0.3) !important;
+        border-color: #4ade80 !important;
     }
     
     /* Sidebar dark theme */
@@ -106,6 +122,56 @@ def get_theme_css(theme='light'):
     }
     section[data-testid="stSidebar"] .stRadio label {
         color: #e8f5e9 !important;
+    }
+    
+    /* Slider styling - dark mode */
+    .stSlider [data-baseweb="slider"] [data-testid="stThumbValue"] {
+        color: #e8f5e9 !important;
+    }
+    .stSlider [data-baseweb="slider"] > div > div {
+        background-color: #1A4D2E !important;
+    }
+    .stSlider [data-baseweb="slider"] > div > div > div {
+        background-color: #1A4D2E !important;
+    }
+    .stSlider [data-baseweb="slider"] [role="slider"] {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    
+    /* Radio button styling - dark mode */
+    .stRadio [role="radiogroup"] label > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    .stRadio [role="radiogroup"] label[data-checked="true"] > div:first-child {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    .stRadio [role="radiogroup"] label[data-checked="true"] > div:first-child::after {
+        background-color: white !important;
+    }
+    
+    /* Checkbox styling - dark mode */
+    .stCheckbox [data-baseweb="checkbox"] > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    .stCheckbox [data-baseweb="checkbox"] input:checked + div {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    .stCheckbox label span[data-testid="stCheckbox"] > div {
+        border-color: #1A4D2E !important;
+    }
+    .stCheckbox input[type="checkbox"]:checked + div {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    [data-testid="stCheckbox"] > label > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    [data-testid="stCheckbox"] > label > div:first-child[aria-checked="true"] {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
     }
     
     .stMarkdown {
@@ -169,6 +235,43 @@ def get_theme_css(theme='light'):
     }
     section[data-testid="stSidebar"] > div {
         background-color: #f8f9fa !important;
+    }
+    
+    /* Slider styling - light mode */
+    .stSlider [data-baseweb="slider"] > div > div {
+        background-color: #1A4D2E !important;
+    }
+    .stSlider [data-baseweb="slider"] > div > div > div {
+        background-color: #1A4D2E !important;
+    }
+    .stSlider [data-baseweb="slider"] [role="slider"] {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    
+    /* Radio button styling - light mode */
+    .stRadio [role="radiogroup"] label > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    .stRadio [role="radiogroup"] label[data-checked="true"] > div:first-child {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    
+    /* Checkbox styling - light mode */
+    .stCheckbox [data-baseweb="checkbox"] > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    .stCheckbox [data-baseweb="checkbox"] input:checked + div {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
+    }
+    [data-testid="stCheckbox"] > label > div:first-child {
+        border-color: #1A4D2E !important;
+    }
+    [data-testid="stCheckbox"] > label > div:first-child[aria-checked="true"] {
+        background-color: #1A4D2E !important;
+        border-color: #1A4D2E !important;
     }
     
     div[data-testid="stMetricValue"] {
@@ -271,59 +374,105 @@ if 'pricing_inputs' not in st.session_state:
         'time_to_expiry': 30,  # days
         'volatility': 0.20,
         'risk_free_rate': 0.10,
-        'option_type': 'Call'
+        'option_type': 'Call',
+        'include_fees': False
     }
 
 # Display market status at the top
 status, status_msg = get_market_status()
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
+
+# Professional Website Header Navigation Bar
+st.markdown("""
+<style>
+/* Header Navigation Styles */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #1a4d2e 0%, #2e8b57 100%);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.header-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+.header-nav {
+    display: flex;
+    gap: 0.25rem;
+}
+.header-status {
+    color: white;
+    font-size: 0.85rem;
+}
+/* Hide default streamlit button styling for nav */
+div[data-testid="column"] .nav-btn button {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255,255,255,0.85) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+div[data-testid="column"] .nav-btn button:hover {
+    background: rgba(255,255,255,0.15) !important;
+    color: white !important;
+}
+div[data-testid="column"] .nav-btn-active button {
+    background: rgba(255,255,255,0.25) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Navigation pages list (Greeks Analysis hidden)
+nav_pages = ["Home", "Option Pricing", "ML Predictions", "Flavia AI", "Settings"]
+
+# Create header with brand, navigation, and status
+st.markdown("""
+<div class="header-container">
+    <div class="header-brand">NSE Options Calculator</div>
+    <div class="header-status"></div>
+</div>
+""", unsafe_allow_html=True)
+
+# Navigation row with buttons
+nav_cols = st.columns([1, 1, 1, 1, 1, 1.5, 0.8])
+
+for idx, page_name in enumerate(nav_pages):
+    with nav_cols[idx]:
+        is_active = st.session_state.page == page_name
+        btn_class = "nav-btn-active" if is_active else "nav-btn"
+        st.markdown(f'<div class="{btn_class}">', unsafe_allow_html=True)
+        if st.button(page_name, key=f"nav_{page_name}", use_container_width=True):
+            st.session_state.page = page_name
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# Market status in second to last column
+with nav_cols[5]:
     status_color = "green" if status == "OPEN" else "red"
-    st.markdown(f"**NSE Market Status:** :{status_color}[{status}] - {status_msg}")
+    st.markdown(f"**NSE:** :{status_color}[{status}] - {status_msg}")
 
-# Main title
-st.title("📈 OPTIONS ON FUTURES CALCULATOR")
-st.markdown("*Advanced Options Analysis for Kenyan Markets*")
+# Theme toggle in last column
+with nav_cols[6]:
+    theme_label = "Switch to Dark" if st.session_state.theme == 'light' else "Switch to Light"
+    toggle_icon = "☀️" if st.session_state.theme == 'dark' else "🌙"
+    if st.button(toggle_icon, help=theme_label, use_container_width=True, key="theme_toggle"):
+        st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+        st.rerun()
 
-# Sidebar
+st.markdown("")  # Spacing
+
+# Sidebar for Input Parameters only
 with st.sidebar:
-    st.markdown("### 🎨 Theme")
-    
-    # Theme selector
-    theme_col1, theme_col2 = st.columns(2)
-    with theme_col1:
-        if st.button("☀️ Light", use_container_width=True, type="primary" if st.session_state.theme == 'light' else "secondary"):
-            st.session_state.theme = 'light'
-            st.rerun()
-    with theme_col2:
-        if st.button("🌙 Dark", use_container_width=True, type="primary" if st.session_state.theme == 'dark' else "secondary"):
-            st.session_state.theme = 'dark'
-            st.rerun()
-    
-    # Current theme indicator
-    theme_emoji = "☀️" if st.session_state.theme == 'light' else "🌙"
-    theme_name = st.session_state.theme.capitalize()
-    st.markdown(f'<div class="theme-badge">{theme_emoji} {theme_name} Theme Active</div>', unsafe_allow_html=True)
-    
-    st.divider()
-    
-    st.markdown("### 📊 Navigation")
-
-    pages = {
-        "🏠 Home": "Home",
-        "💹 Option Pricing": "Option Pricing",
-        "📊 Greeks Analysis": "Greeks Analysis",
-        "🤖 ML Predictions": "ML Predictions",
-        "💬 Flavia AI": "Flavia AI",
-        "⚙️ Settings": "Settings"
-    }
-
-    selected_page = st.radio("Select Page", list(pages.keys()))
-    st.session_state.page = pages[selected_page]
-
-    st.divider()
-
-    st.markdown("### 📝 Input Parameters")
+    st.markdown("### Input Parameters")
 
     # Contract selection
     available_contracts = list(NSE_FUTURES.keys()) if MODULES_AVAILABLE else ['SCOM', 'KCB', 'EQTY']
@@ -348,6 +497,48 @@ with st.sidebar:
 
     option_type = st.radio("Option Type", ['Call', 'Put'])
     st.session_state.pricing_inputs['option_type'] = option_type
+
+    st.divider()
+    
+    # NSE Market Fees
+    st.markdown("### Market Fees")
+    include_fees = st.checkbox("Include NSE Market Fees", value=False, help="Add NSE trading fees to the option price calculation")
+    st.session_state.pricing_inputs['include_fees'] = include_fees
+    
+    if include_fees:
+        with st.expander("Fee Breakdown", expanded=True):
+            st.markdown("""
+            | Participant | Rate |
+            |-------------|------|
+            | NSE Clear | 0.0125% |
+            | Clearing Member | 0.0125% |
+            | Trading Member | 0.05% |
+            | IPF Levy | 0.005% |
+            | CMA Fee | 0.005% |
+            | **Total** | **0.085%** |
+            """)
+            st.caption("Fees calculated on notional contract value")
+
+# NSE Market Fee rates (as percentages)
+NSE_FEES = {
+    'nse_clear': 0.000125,      # 0.0125%
+    'clearing_member': 0.000125, # 0.0125%
+    'trading_member': 0.0005,    # 0.05%
+    'ipf_levy': 0.00005,         # 0.005%
+    'cma_fee': 0.00005,          # 0.005%
+}
+NSE_TOTAL_FEE_RATE = sum(NSE_FEES.values())  # 0.085% = 0.00085
+
+def calculate_market_fees(notional_value):
+    """Calculate NSE market fees based on notional contract value."""
+    return {
+        'nse_clear': notional_value * NSE_FEES['nse_clear'],
+        'clearing_member': notional_value * NSE_FEES['clearing_member'],
+        'trading_member': notional_value * NSE_FEES['trading_member'],
+        'ipf_levy': notional_value * NSE_FEES['ipf_levy'],
+        'cma_fee': notional_value * NSE_FEES['cma_fee'],
+        'total': notional_value * NSE_TOTAL_FEE_RATE
+    }
 
 # Page content
 page = st.session_state.page
@@ -382,6 +573,15 @@ if page == "Home":
             inputs['volatility'],
             inputs['risk_free_rate']
         )
+        
+        # Calculate market fees if enabled
+        include_fees = inputs.get('include_fees', False)
+        notional_value = inputs['futures_price']  # Notional value based on futures price
+        fees = calculate_market_fees(notional_value) if include_fees else {'total': 0}
+        
+        # Add fees to option prices
+        call_price_with_fees = call_price + fees['total']
+        put_price_with_fees = put_price + fees['total']
 
         # Black-76 Pricing Model Summary Section
         st.markdown("### Black-76 Pricing Model")
@@ -407,21 +607,39 @@ if page == "Home":
         # Call and Put value boxes
         value_cols = st.columns(2)
         with value_cols[0]:
+            fee_label = f" (incl. fees: KES {fees['total']:.4f})" if include_fees else ""
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #1e6b7b 0%, #2e8b9b 100%);
                         padding: 1.5rem; border-radius: 10px; text-align: center;">
-                <p style="margin: 0; color: white; font-size: 0.9rem;">CALL Value</p>
-                <h2 style="margin: 0.5rem 0 0 0; color: white;">${call_price:.2f}</h2>
+                <p style="margin: 0; color: white; font-size: 0.9rem;">CALL Value{fee_label}</p>
+                <h2 style="margin: 0.5rem 0 0 0; color: white;">KES {call_price_with_fees:.2f}</h2>
             </div>
             """, unsafe_allow_html=True)
         with value_cols[1]:
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #8b2e4d 0%, #a04060 100%);
                         padding: 1.5rem; border-radius: 10px; text-align: center;">
-                <p style="margin: 0; color: white; font-size: 0.9rem;">PUT Value</p>
-                <h2 style="margin: 0.5rem 0 0 0; color: white;">${put_price:.2f}</h2>
+                <p style="margin: 0; color: white; font-size: 0.9rem;">PUT Value{fee_label}</p>
+                <h2 style="margin: 0.5rem 0 0 0; color: white;">KES {put_price_with_fees:.2f}</h2>
             </div>
             """, unsafe_allow_html=True)
+        
+        # Show fee breakdown if enabled
+        if include_fees:
+            with st.expander("Fee Breakdown Details", expanded=False):
+                fee_cols = st.columns(6)
+                with fee_cols[0]:
+                    st.metric("NSE Clear", f"KES {fees['nse_clear']:.4f}")
+                with fee_cols[1]:
+                    st.metric("Clearing Member", f"KES {fees['clearing_member']:.4f}")
+                with fee_cols[2]:
+                    st.metric("Trading Member", f"KES {fees['trading_member']:.4f}")
+                with fee_cols[3]:
+                    st.metric("IPF Levy", f"KES {fees['ipf_levy']:.4f}")
+                with fee_cols[4]:
+                    st.metric("CMA Fee", f"KES {fees['cma_fee']:.4f}")
+                with fee_cols[5]:
+                    st.metric("Total Fees", f"KES {fees['total']:.4f}")
 
         st.markdown("")  # Spacing
 
@@ -535,7 +753,7 @@ if page == "Home":
     else:
         st.warning("Pricing engine not available. Please check module installation.")
 
-    st.markdown("### 📊 NSE Market Overview")
+    st.markdown("### NSE Market Overview")
 
     sample_data = {
         'Contract': ['SCOM', 'KCB', 'EQTY', 'ABSA', 'NSE25'],
@@ -548,10 +766,10 @@ if page == "Home":
     df = pd.DataFrame(sample_data)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.info("📋 **Disclaimer**: This tool is for educational and research purposes. All market data shown is simulated.")
+    st.info("**Disclaimer**: This tool is for educational and research purposes. All market data shown is simulated.")
 
 elif page == "Option Pricing":
-    st.markdown("### 💹 Black-76 Pricing Model")
+    st.markdown("### Black-76 Pricing Model")
     st.markdown("Price European-style options on NSE futures")
 
     inputs = st.session_state.pricing_inputs
@@ -579,14 +797,21 @@ elif page == "Option Pricing":
                     inputs['risk_free_rate']
                 )
 
+            # Calculate market fees if enabled
+            include_fees = inputs.get('include_fees', False)
+            notional_value = inputs['futures_price']
+            fees = calculate_market_fees(notional_value) if include_fees else {'total': 0}
+            option_price_with_fees = option_price + fees['total']
+
             # Display results
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
+                price_label = f"{inputs['option_type']} Price" + (" (incl. fees)" if include_fees else "")
                 st.metric(
-                    f"{'🟢' if inputs['option_type'] == 'Call' else '🔻'} {inputs['option_type']} Price",
-                    format_currency(option_price),
-                    "Per contract"
+                    price_label,
+                    format_currency(option_price_with_fees),
+                    f"Fees: {format_currency(fees['total'])}" if include_fees else "Per contract"
                 )
 
             with col2:
@@ -609,18 +834,35 @@ elif page == "Option Pricing":
                     f"{inputs['volatility']:.1%}",
                     ""
                 )
+            
+            # Show fee breakdown if enabled
+            if include_fees:
+                with st.expander("Fee Breakdown", expanded=False):
+                    fee_cols = st.columns(6)
+                    with fee_cols[0]:
+                        st.metric("NSE Clear", f"KES {fees['nse_clear']:.4f}")
+                    with fee_cols[1]:
+                        st.metric("Clearing Member", f"KES {fees['clearing_member']:.4f}")
+                    with fee_cols[2]:
+                        st.metric("Trading Member", f"KES {fees['trading_member']:.4f}")
+                    with fee_cols[3]:
+                        st.metric("IPF Levy", f"KES {fees['ipf_levy']:.4f}")
+                    with fee_cols[4]:
+                        st.metric("CMA Fee", f"KES {fees['cma_fee']:.4f}")
+                    with fee_cols[5]:
+                        st.metric("Total Fees", f"KES {fees['total']:.4f}")
 
             st.divider()
 
             # P&L Analysis
-            st.markdown("### 📈 Profit & Loss Analysis")
+            st.markdown("### Profit & Loss Analysis")
 
             price_range = np.linspace(inputs['futures_price'] * 0.7, inputs['futures_price'] * 1.3, 100)
 
             if inputs['option_type'] == 'Call':
-                pnl = [max(0, p - inputs['strike_price']) - option_price for p in price_range]
+                pnl = [max(0, p - inputs['strike_price']) - option_price_with_fees for p in price_range]
             else:
-                pnl = [max(0, inputs['strike_price'] - p) - option_price for p in price_range]
+                pnl = [max(0, inputs['strike_price'] - p) - option_price_with_fees for p in price_range]
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(
@@ -648,7 +890,7 @@ elif page == "Option Pricing":
             st.plotly_chart(fig, use_container_width=True)
 
             # Price sensitivity heatmap
-            st.markdown("### 🔥 Price Sensitivity Heatmap")
+            st.markdown("### Price Sensitivity Heatmap")
 
             price_range_heat = np.linspace(inputs['futures_price'] * 0.7, inputs['futures_price'] * 1.3, 30)
             vol_range = np.linspace(0.1, 0.6, 30)
@@ -680,13 +922,13 @@ elif page == "Option Pricing":
             st.plotly_chart(fig_heat, use_container_width=True)
 
         except Exception as e:
-            st.error(f"❌ Pricing error: {str(e)}")
+            st.error(f"Pricing error: {str(e)}")
             logger.error(f"Pricing error: {e}")
     else:
-        st.warning("⚠️ Pricing engine not available. Please check module installation.")
+        st.warning("Pricing engine not available. Please check module installation.")
 
 elif page == "Greeks Analysis":
-    st.markdown("### 📊 Greeks Analysis")
+    st.markdown("### Greeks Analysis")
     st.markdown("Analyze option risk sensitivities for comprehensive risk management")
 
     if not MODULES_AVAILABLE:
@@ -713,7 +955,7 @@ elif page == "Greeks Analysis":
             )
             
             # Display Greeks in metric cards
-            st.markdown("#### 📈 Primary Greeks")
+            st.markdown("#### Primary Greeks")
             col1, col2, col3 = st.columns(3)
             
             with col1:
@@ -763,7 +1005,7 @@ elif page == "Greeks Analysis":
             st.divider()
             
             # Greeks visualization
-            st.markdown("#### 📊 Greeks vs Futures Price")
+            st.markdown("#### Greeks vs Futures Price")
             
             # Create price range
             price_range = np.linspace(
@@ -909,9 +1151,9 @@ elif page == "Greeks Analysis":
             st.divider()
             
             # Greeks interpretation
-            st.markdown("#### 📚 Greeks Interpretation")
+            st.markdown("#### Greeks Interpretation")
             
-            with st.expander("🔵 Delta - Directional Risk", expanded=False):
+            with st.expander("Delta - Directional Risk", expanded=False):
                 delta_sign = "positive" if greeks.delta > 0 else "negative"
                 st.markdown(f"""
                 **Current Delta: {greeks.delta:.4f}**
@@ -922,7 +1164,7 @@ elif page == "Greeks Analysis":
                 - At-the-money options have delta around ±0.5
                 """)
             
-            with st.expander("🟢 Gamma - Delta Sensitivity", expanded=False):
+            with st.expander("Gamma - Delta Sensitivity", expanded=False):
                 st.markdown(f"""
                 **Current Gamma: {greeks.gamma:.6f}**
                 
@@ -932,7 +1174,7 @@ elif page == "Greeks Analysis":
                 - Important for managing delta hedging strategies
                 """)
             
-            with st.expander("🟠 Vega - Volatility Risk", expanded=False):
+            with st.expander("Vega - Volatility Risk", expanded=False):
                 st.markdown(f"""
                 **Current Vega: {greeks.vega:.4f}**
                 
@@ -942,7 +1184,7 @@ elif page == "Greeks Analysis":
                 - Important for volatility trading strategies
                 """)
             
-            with st.expander("🔴 Theta - Time Decay", expanded=False):
+            with st.expander("Theta - Time Decay", expanded=False):
                 theta_per_week = greeks.theta * 7
                 st.markdown(f"""
                 **Current Theta: {greeks.theta:.4f} per day**
@@ -953,7 +1195,7 @@ elif page == "Greeks Analysis":
                 - Long options have negative theta (time works against you)
                 """)
             
-            with st.expander("🟣 Rho - Interest Rate Risk", expanded=False):
+            with st.expander("Rho - Interest Rate Risk", expanded=False):
                 st.markdown(f"""
                 **Current Rho: {greeks.rho:.4f}**
                 
@@ -962,7 +1204,7 @@ elif page == "Greeks Analysis":
                 - More significant for longer-dated options
                 """)
             
-            with st.expander("⚡ Lambda - Leverage", expanded=False):
+            with st.expander("Lambda - Leverage", expanded=False):
                 st.markdown(f"""
                 **Current Lambda: {greeks.lambda_:.4f}**
                 
@@ -972,11 +1214,11 @@ elif page == "Greeks Analysis":
                 """)
             
         except Exception as e:
-            st.error(f"❌ Greeks calculation failed: {str(e)}")
+            st.error(f"Greeks calculation failed: {str(e)}")
             logger.error(f"Greeks error: {e}", exc_info=True)
 
 elif page == "ML Predictions":
-    st.markdown("### 🤖 Machine Learning Analysis")
+    st.markdown("### Machine Learning Analysis")
 
     if not MODULES_AVAILABLE:
         st.warning("ML modules not available. Please check installation.")
@@ -987,7 +1229,7 @@ elif page == "Flavia AI":
     if CHATBOT_AVAILABLE:
         render_flavia_chat()
     else:
-        st.markdown("### 💬 Flavia AI Chatbot")
+        st.markdown("### Flavia AI Chatbot")
 
         # Fallback simple chat interface with hardcoded API key
         FLAVIA_API_KEY = "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"
@@ -1000,7 +1242,7 @@ elif page == "Flavia AI":
             from openai import OpenAI
             client = OpenAI(api_key=FLAVIA_API_KEY)
 
-            st.info("👋 Hi! I'm Flavia, your NSE options trading assistant. Ask me anything about options trading, market analysis, or Kenyan securities!")
+            st.info("Hi! I'm Flavia, your NSE options trading assistant. Ask me anything about options trading, market analysis, or Kenyan securities!")
 
             # Display chat history
             for msg in st.session_state.flavia_history:
@@ -1040,19 +1282,19 @@ elif page == "Flavia AI":
             st.error("OpenAI library not installed. Run: pip install openai")
 
 elif page == "Settings":
-    st.markdown("### ⚙️ Application Settings")
+    st.markdown("### Application Settings")
 
-    st.subheader("🎨 Theme Settings")
+    st.subheader("Theme Settings")
     
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Current Theme:**")
-        theme_emoji = "☀️ Light" if st.session_state.theme == 'light' else "🌙 Dark"
-        st.info(theme_emoji)
+        theme_name = "Light" if st.session_state.theme == 'light' else "Dark"
+        st.info(theme_name)
     
     with col2:
         st.markdown("**Toggle Theme:**")
-        if st.button("🔄 Switch Theme", use_container_width=True):
+        if st.button("Switch Theme", use_container_width=True):
             st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
             st.rerun()
     
@@ -1060,21 +1302,21 @@ elif page == "Settings":
     
     st.markdown("""
     **Theme Features:**
-    - 🌓 Toggle between light and dark modes
-    - 🎨 Custom color schemes for each theme
-    - 📊 Optimized chart colors for readability
-    - 💚 NSE-inspired green accent colors
+    - Toggle between light and dark modes
+    - Custom color schemes for each theme
+    - Optimized chart colors for readability
+    - NSE-inspired green accent colors
     """)
 
     st.divider()
 
-    st.subheader("📊 Display Settings")
+    st.subheader("Display Settings")
     show_advanced = st.checkbox("Show Advanced Metrics", value=True)
     show_tooltips = st.checkbox("Show Helpful Tooltips", value=True)
     
     st.divider()
 
-    st.subheader("ℹ️ Application Information")
+    st.subheader("Application Information")
     st.info("""
     **NSE Options Pricing Tool v2.0**
 
@@ -1084,7 +1326,7 @@ elif page == "Settings":
     - **ML Models**: GARCH, LSTM Volatility Prediction (Coming Soon)
     - **Data Source**: NSE & Yahoo Finance
     - **Advanced Analytics**: Heatmaps, P&L Analysis
-    - **Themes**: Light & Dark Mode ✨
+    - **Themes**: Light & Dark Mode
 
-    Built with ❤️ for the Kenyan securities market.
+    Built for the Kenyan securities market.
     """)

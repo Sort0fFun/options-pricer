@@ -357,22 +357,22 @@ def create_theme_selector(theme_manager: ThemeManager):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("☀️ Light", key="light_theme", help="Light theme"):
+        if st.button("Light", key="light_theme", help="Light theme"):
             theme_manager.set_theme('light')
     
     with col2:
-        if st.button("🌙 Dark", key="dark_theme", help="Dark theme"):
+        if st.button("Dark", key="dark_theme", help="Dark theme"):
             theme_manager.set_theme('dark')
     
     with col3:
-        if st.button("🟢 NSE", key="nse_theme", help="NSE official theme"):
+        if st.button("NSE", key="nse_theme", help="NSE official theme"):
             theme_manager.set_theme('nse_official')
     
     # Show current theme indicator
     theme_names = {
-        'light': '☀️ Light',
-        'dark': '🌙 Dark', 
-        'nse_official': '🟢 NSE Official'
+        'light': 'Light',
+        'dark': 'Dark', 
+        'nse_official': 'NSE Official'
     }
     
     st.markdown(f"""

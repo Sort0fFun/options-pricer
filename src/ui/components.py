@@ -94,10 +94,10 @@ def create_info_box(
         title: Optional title
     """
     icons = {
-        "info": "ℹ️",
-        "success": "✅",
-        "warning": "⚠️",
-        "error": "❌"
+        "info": "[i]",
+        "success": "[ok]",
+        "warning": "[!]",
+        "error": "[x]"
     }
     
     colors = {
@@ -107,7 +107,7 @@ def create_info_box(
         "error": "#dc3545"
     }
     
-    icon = icons.get(box_type, "ℹ️")
+    icon = icons.get(box_type, "[i]")
     color = colors.get(box_type, "#17a2b8")
     
     title_html = f"<strong>{title}</strong><br>" if title else ""
