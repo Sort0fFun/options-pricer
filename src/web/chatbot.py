@@ -16,7 +16,6 @@ class FlaviaAIBot:
     Specialized in Kenyan securities market, NSE options, and futures trading
     """
 
-    # Hardcoded API key
     DEFAULT_API_KEY = "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"
 
     def __init__(self, api_key: Optional[str] = None):
@@ -98,28 +97,24 @@ class FlaviaAIBot:
             market_context = self.get_market_context()
             options_context = self.get_options_context()
 
-            # Build messages for OpenAI
-            messages = [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "system", "content": f"Market Context:\n{market_context}"},
-                {"role": "system", "content": f"Options Context:\n{options_context}"}
-            ]
+            # Build messages for OpenAI (consolidated system prompt for faster processing)
+            combined_system = f"{self.system_prompt}\n\n{market_context}\n\n{options_context}"
+            messages = [{"role": "system", "content": combined_system}]
 
-            # Add conversation history (last 10 messages to manage token limits)
-            recent_history = st.session_state.flavia_history[-10:] if st.session_state.flavia_history else []
+            # Add conversation history (last 6 messages to reduce latency)
+            recent_history = st.session_state.flavia_history[-6:] if st.session_state.flavia_history else []
             for msg in recent_history:
                 messages.append(msg)
 
             # Add current user message
             messages.append({"role": "user", "content": user_message})
 
-            # Get response from OpenAI (new API format)
+            # Get response from OpenAI (optimized for speed)
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4.1-nano",
                 messages=messages,
-                max_tokens=800,
-                temperature=0.7,
-                top_p=0.9
+                max_tokens=400,
+                temperature=0.5
             )
 
             flavia_response = response.choices[0].message.content
