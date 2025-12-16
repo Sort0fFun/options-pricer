@@ -144,7 +144,7 @@ def get_theme_css(theme='light'):
     
     /* Slider styling - dark mode */
     .stSlider [data-baseweb="slider"] [data-testid="stThumbValue"] {
-        color: #e8f5e9 !important;
+        color: #1A4D2E !important;
     }
     .stSlider [data-baseweb="slider"] > div > div {
         background-color: #1A4D2E !important;
@@ -155,6 +155,13 @@ def get_theme_css(theme='light'):
     .stSlider [data-baseweb="slider"] [role="slider"] {
         background-color: #1A4D2E !important;
         border-color: #1A4D2E !important;
+    }
+    .stSlider p, .stSlider [data-testid="stThumbValue"] {
+        color: #1A4D2E !important;
+    }
+    .stSlider div[data-testid="stTickBarMin"],
+    .stSlider div[data-testid="stTickBarMax"] {
+        color: #1A4D2E !important;
     }
     
     /* Radio button styling - dark mode */
@@ -168,30 +175,29 @@ def get_theme_css(theme='light'):
     .stRadio [role="radiogroup"] label[data-checked="true"] > div:first-child::after {
         background-color: white !important;
     }
-    
-    /* Checkbox styling - dark mode */
-    .stCheckbox [data-baseweb="checkbox"] > div:first-child {
-        border-color: #1A4D2E !important;
+
+    /* Multiselect tag styling - dark mode */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #1A4D2E !important;
+        color: white !important;
     }
+    .stMultiSelect [data-baseweb="tag"] span {
+        color: white !important;
+    }
+    .stMultiSelect [data-baseweb="tag"] svg {
+        fill: white !important;
+    }
+
+    /* Checkbox styling - dark mode */
     .stCheckbox [data-baseweb="checkbox"] input:checked + div {
         background-color: #1A4D2E !important;
         border-color: #1A4D2E !important;
     }
-    .stCheckbox label span[data-testid="stCheckbox"] > div {
+    .stCheckbox [data-baseweb="checkbox"] div {
         border-color: #1A4D2E !important;
     }
-    .stCheckbox input[type="checkbox"]:checked + div {
-        background-color: #1A4D2E !important;
-        border-color: #1A4D2E !important;
-    }
-    [data-testid="stCheckbox"] > label > div:first-child {
-        border-color: #1A4D2E !important;
-    }
-    [data-testid="stCheckbox"] > label > div:first-child[aria-checked="true"] {
-        background-color: #1A4D2E !important;
-        border-color: #1A4D2E !important;
-    }
-    
+
+
     .stMarkdown {
         color: #e8f5e9;
     }
@@ -282,7 +288,14 @@ def get_theme_css(theme='light'):
         background-color: #1A4D2E !important;
         border-color: #1A4D2E !important;
     }
-    
+    .stSlider p, .stSlider [data-testid="stThumbValue"] {
+        color: #1A4D2E !important;
+    }
+    .stSlider div[data-testid="stTickBarMin"],
+    .stSlider div[data-testid="stTickBarMax"] {
+        color: #1A4D2E !important;
+    }
+
     /* Radio button styling - light mode */
     .stRadio [role="radiogroup"] label > div:first-child {
         border-color: #1A4D2E !important;
@@ -291,23 +304,28 @@ def get_theme_css(theme='light'):
         background-color: #1A4D2E !important;
         border-color: #1A4D2E !important;
     }
-    
-    /* Checkbox styling - light mode */
-    .stCheckbox [data-baseweb="checkbox"] > div:first-child {
-        border-color: #1A4D2E !important;
+
+    /* Multiselect tag styling - light mode */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #1A4D2E !important;
+        color: white !important;
     }
+    .stMultiSelect [data-baseweb="tag"] span {
+        color: white !important;
+    }
+    .stMultiSelect [data-baseweb="tag"] svg {
+        fill: white !important;
+    }
+
+    /* Checkbox styling - light mode */
     .stCheckbox [data-baseweb="checkbox"] input:checked + div {
         background-color: #1A4D2E !important;
         border-color: #1A4D2E !important;
     }
-    [data-testid="stCheckbox"] > label > div:first-child {
+    .stCheckbox [data-baseweb="checkbox"] div {
         border-color: #1A4D2E !important;
     }
-    [data-testid="stCheckbox"] > label > div:first-child[aria-checked="true"] {
-        background-color: #1A4D2E !important;
-        border-color: #1A4D2E !important;
-    }
-    
+
     div[data-testid="stMetricValue"] {
         color: #2e8b57;
     }
@@ -364,7 +382,7 @@ MODULES_AVAILABLE = False
 CHATBOT_AVAILABLE = False
 try:
     from src.core.pricing.black76 import Black76Pricer
-    from src.core.greeks.calculator import GreeksCalculator
+    # from src.core.greeks.calculator import GreeksCalculator
     # from src.ml.volatility.predictor import VolatilityPredictor
     # from src.ml.regime.detector import RegimeDetector
     from src.core.pricing.contracts import NSE_FUTURES
@@ -416,7 +434,7 @@ def get_market_status():
 
 # Initialize session state
 if 'page' not in st.session_state:
-    st.session_state.page = 'Home'
+    st.session_state.page = 'Option Calculator'
 
 # Theme already initialized earlier in the file
 
@@ -485,13 +503,13 @@ div[data-testid="column"] .nav-btn-active button {
 </style>
 """, unsafe_allow_html=True)
 
-# Navigation pages list (Greeks Analysis hidden)
-nav_pages = ["Home", "Option Pricing", "ML Predictions", "Flavia AI", "Settings"]
+nav_pages = ["Option Calculator", "PnL Predictor", "Flavia AI", "Settings"]
+# nav_pages = ["Option Calculator", "Profit Predictor", "ML Predictions", "Flavia AI", "Settings"]
 
 # Create header with brand, navigation, and status
 st.markdown("""
 <div class="header-container">
-    <div class="header-brand">NSE Options Calculator</div>
+    <div class="header-brand">NSE Options Calculator & PnL Predictor</div>
     <div class="header-status"></div>
 </div>
 """, unsafe_allow_html=True)
@@ -543,7 +561,9 @@ with st.sidebar:
     days_to_expiry = st.number_input("Days to Expiry", value=30, min_value=1)
     st.session_state.pricing_inputs['time_to_expiry'] = days_to_expiry
 
-    volatility = st.slider("Volatility (%)", min_value=10, max_value=100, value=30) / 100
+    volatility_pct = st.slider("Volatility (%)", min_value=10, max_value=100, value=30)
+    st.caption(f"Current: {volatility_pct}%")
+    volatility = volatility_pct / 100
     st.session_state.pricing_inputs['volatility'] = volatility
 
     risk_free_rate = st.number_input("Risk-Free Rate (%)", value=12.0, step=0.1) / 100
@@ -597,7 +617,7 @@ def calculate_market_fees(notional_value):
 # Page content
 page = st.session_state.page
 
-if page == "Home":
+if page == "Option Calculator":
     st.markdown("""
     <div class="main-header">
         <h2 style="margin: 0;">Welcome to NSE Options Calculator</h2>
@@ -699,22 +719,22 @@ if page == "Home":
 
         # Options Price - Interactive Heatmap Section
         st.markdown("### Options Price - Interactive Heatmap")
-        st.info("Explore how option prices fluctuate with varying 'Spot Prices and Volatility' levels using interactive heatmap parameters, all while maintaining a constant 'Strike Price'.")
+        st.info("Explore how option prices fluctuate with varying input parameters.")
 
         # Heatmap Parameters Expander
         with st.expander("Heatmap Parameters", expanded=False):
             hm_param_cols = st.columns(2)
             with hm_param_cols[0]:
                 min_spot = st.number_input(
-                    "Min Spot Price",
-                    value=float(inputs['futures_price'] * 0.8),
+                    "Min Futures Price",
+                    value=float(min(inputs['futures_price'], inputs['strike_price']) * 0.8),
                     step=0.01,
                     format="%.2f",
                     key="hm_min_spot"
                 )
                 max_spot = st.number_input(
-                    "Max Spot Price",
-                    value=float(inputs['futures_price'] * 1.2),
+                    "Max Futures Price",
+                    value=float(max(inputs['futures_price'], inputs['strike_price']) * 1.2),
                     step=0.01,
                     format="%.2f",
                     key="hm_max_spot"
@@ -724,7 +744,7 @@ if page == "Home":
                     "Min Volatility for Heatmap",
                     min_value=0.05,
                     max_value=0.50,
-                    value=0.14,
+                    value=max(0.05, inputs['volatility'] - 0.15),
                     step=0.01,
                     format="%.2f",
                     key="hm_min_vol"
@@ -733,7 +753,7 @@ if page == "Home":
                     "Max Volatility for Heatmap",
                     min_value=0.15,
                     max_value=1.0,
-                    value=0.41,
+                    value=min(1.0, inputs['volatility'] + 0.15),
                     step=0.01,
                     format="%.2f",
                     key="hm_max_vol"
@@ -773,12 +793,14 @@ if page == "Home":
             ))
             fig_call.update_layout(
                 title=dict(text="CALL", x=0.5, font=dict(size=16)),
-                xaxis_title="Spot Price",
+                xaxis_title="Futures Price",
                 yaxis_title="Volatility",
                 height=450,
                 template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
                 margin=dict(l=50, r=20, t=60, b=50)
             )
+            fig_call.add_vline(x=inputs['futures_price'], line_dash="dash", line_color="red", opacity=0.7)
+            fig_call.add_hline(y=inputs['volatility'], line_dash="dash", line_color="red", opacity=0.7)
             st.plotly_chart(fig_call, use_container_width=True, config={'displayModeBar': False})
 
         with heatmap_cols[1]:
@@ -796,30 +818,133 @@ if page == "Home":
             ))
             fig_put.update_layout(
                 title=dict(text="PUT", x=0.5, font=dict(size=16)),
-                xaxis_title="Spot Price",
+                xaxis_title="Futures Price",
                 yaxis_title="Volatility",
                 height=450,
                 template="plotly_dark" if st.session_state.theme == 'dark' else "plotly_white",
                 margin=dict(l=50, r=20, t=60, b=50)
             )
+            fig_put.add_vline(x=inputs['futures_price'], line_dash="dash", line_color="red", opacity=0.7)
+            fig_put.add_hline(y=inputs['volatility'], line_dash="dash", line_color="red", opacity=0.7)
             st.plotly_chart(fig_put, use_container_width=True, config={'displayModeBar': False})
 
     else:
         st.warning("Pricing engine not available. Please check module installation.")
 
-    st.markdown("### NSE Market Overview")
+    st.markdown("### NSE Futures Market Overview")
 
-    sample_data = {
-        'Contract': ['SCOM', 'EQTY', 'KCBG', 'EABL', 'BATK', 'ABSA', 'NCBA', 'COOP', 'SCBK', 'IMHP', 'N25I'],
-        'Name': ['Safaricom', 'Equity Group', 'KCB Group', 'EA Breweries', 'BAT Kenya', 'ABSA Kenya', 'NCBA Group', 'Co-op Bank', 'Stanchart', 'I&M Holdings', 'NSE 25 Index'],
-        'MTM Price': [28.21, 60.13, 56.84, 230.45, 437.40, 22.05, 78.17, 22.00, 287.60, 45.45, 3155.58],
-        'Sector': ['Telecom', 'Banking', 'Banking', 'Manufacturing', 'Manufacturing', 'Banking', 'Banking', 'Banking', 'Banking', 'Banking', 'Index']
-    }
+    # Load real NSE derivatives data
+    derivatives_file = "/Users/mac/Downloads/Ahona_Amanda_Derivatives_Price_Lists_2025.csv"
 
-    df = pd.DataFrame(sample_data)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    try:
+        # Read the CSV file, skipping header rows
+        raw_df = pd.read_csv(derivatives_file, header=None)
 
-    st.info("**Disclaimer**: This tool is for educational and research purposes. All market data shown is simulated.")
+        # Parse the futures data from the CSV structure
+        futures_data = []
+        current_contract = None
+
+        for idx, row in raw_df.iterrows():
+            first_col = str(row[0]).strip() if pd.notna(row[0]) else ""
+
+            # Detect contract type headers
+            if "INDEX (" in first_col or "SINGLE STOCK FUTURE (" in first_col:
+                # Extract contract symbol from header like "INDEX (N25I)" or "SINGLE STOCK FUTURE (SCOM)"
+                start = first_col.find("(") + 1
+                end = first_col.find(")")
+                current_contract = first_col[start:end] if start > 0 and end > start else None
+                contract_type = "Index" if "INDEX" in first_col else "Single Stock"
+            elif current_contract and "/" in first_col:
+                # This is a data row with expiry date
+                try:
+                    expiry_date = first_col
+                    days_to_expiry = row[4] if pd.notna(row[4]) else ""
+                    mtm_price = str(row[5]).replace(",", "").strip() if pd.notna(row[5]) else ""
+                    prev_price = str(row[6]).replace(",", "").strip() if pd.notna(row[6]) else ""
+                    open_interest = str(row[9]).replace(",", "").strip() if pd.notna(row[9]) else "0"
+
+                    # Clean numeric values
+                    try:
+                        mtm_float = float(mtm_price) if mtm_price else 0
+                        days_int = int(str(days_to_expiry).strip()) if str(days_to_expiry).strip().isdigit() else 0
+                        oi_clean = open_interest.replace("-", "0").strip()
+                        oi_float = float(oi_clean) if oi_clean and oi_clean != "" else 0
+                    except:
+                        mtm_float = 0
+                        days_int = 0
+                        oi_float = 0
+
+                    if mtm_float > 0:
+                        futures_data.append({
+                            'Contract': current_contract,
+                            'Type': contract_type,
+                            'Expiry': expiry_date,
+                            'Days to Expiry': days_int,
+                            'MTM Price (KES)': mtm_float,
+                            'Open Interest': int(oi_float)
+                        })
+                except Exception:
+                    continue
+
+        if futures_data:
+            futures_df = pd.DataFrame(futures_data)
+
+            # Filter options
+            col1, col2 = st.columns(2)
+            with col1:
+                contract_filter = st.multiselect(
+                    "Filter by Contract",
+                    options=futures_df['Contract'].unique().tolist(),
+                    default=futures_df['Contract'].unique().tolist()[:5]
+                )
+            with col2:
+                type_filter = st.multiselect(
+                    "Filter by Type",
+                    options=futures_df['Type'].unique().tolist(),
+                    default=futures_df['Type'].unique().tolist()
+                )
+
+            # Apply filters - show all data if filters are empty
+            if not contract_filter and not type_filter:
+                filtered_df = futures_df
+            elif not contract_filter:
+                filtered_df = futures_df[futures_df['Type'].isin(type_filter)]
+            elif not type_filter:
+                filtered_df = futures_df[futures_df['Contract'].isin(contract_filter)]
+            else:
+                filtered_df = futures_df[
+                    (futures_df['Contract'].isin(contract_filter)) &
+                    (futures_df['Type'].isin(type_filter))
+                ]
+
+            # Display the data
+            st.dataframe(
+                filtered_df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    'MTM Price (KES)': st.column_config.NumberColumn(format="%.2f"),
+                    'Open Interest': st.column_config.NumberColumn(format="%d")
+                }
+            )
+
+            st.caption(f"Showing {len(filtered_df)} of {len(futures_df)} futures contracts")
+        else:
+            st.warning("No futures data found in the file.")
+
+    except FileNotFoundError:
+        st.warning("Derivatives price list file not found. Showing sample data.")
+        sample_data = {
+            'Contract': ['SCOM', 'EQTY', 'KCBG', 'EABL', 'N25I'],
+            'Type': ['Single Stock', 'Single Stock', 'Single Stock', 'Single Stock', 'Index'],
+            'MTM Price (KES)': [16.87, 47.81, 43.31, 181.80, 3460.00],
+            'Days to Expiry': [48, 48, 48, 48, 48]
+        }
+        st.dataframe(pd.DataFrame(sample_data), use_container_width=True, hide_index=True)
+    except Exception as e:
+        st.error(f"Error loading derivatives data: {str(e)}")
+
+    st.info("**Data Source**: NSE Derivatives Price List 2025")
 
 elif page == "Option Pricing":
     st.markdown("### Black-76 Pricing Model")
@@ -980,296 +1105,6 @@ elif page == "Option Pricing":
     else:
         st.warning("Pricing engine not available. Please check module installation.")
 
-elif page == "Greeks Analysis":
-    st.markdown("### Greeks Analysis")
-    st.markdown("Analyze option risk sensitivities for comprehensive risk management")
-
-    if not MODULES_AVAILABLE:
-        st.warning("Greeks calculator not available. Please check module installation.")
-    else:
-        inputs = st.session_state.pricing_inputs
-        
-        try:
-            # Initialize calculators
-            pricer = Black76Pricer()
-            greeks_calc = GreeksCalculator(pricer)
-            
-            time_to_expiry = inputs['time_to_expiry'] / 365
-            
-            # Calculate Greeks
-            greeks = greeks_calc.calculate_greeks(
-                futures_price=inputs['futures_price'],
-                strike_price=inputs['strike_price'],
-                time_to_expiry=time_to_expiry,
-                volatility=inputs['volatility'],
-                risk_free_rate=inputs['risk_free_rate'],
-                option_type=inputs['option_type'].lower(),
-                contract_symbol=inputs['contract']
-            )
-            
-            # Display Greeks in metric cards
-            st.markdown("#### Primary Greeks")
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric(
-                    "Delta (Δ)",
-                    f"{greeks.delta:.4f}",
-                    help="Change in option price per KES 1 change in futures price"
-                )
-            
-            with col2:
-                st.metric(
-                    "Gamma (Γ)",
-                    f"{greeks.gamma:.6f}",
-                    help="Change in delta per KES 1 change in futures price"
-                )
-            
-            with col3:
-                st.metric(
-                    "Vega (ν)",
-                    f"{greeks.vega:.4f}",
-                    help="Change in option price per 1% change in volatility"
-                )
-            
-            col4, col5, col6 = st.columns(3)
-            
-            with col4:
-                st.metric(
-                    "Theta (Θ)",
-                    f"{greeks.theta:.4f}",
-                    help="Change in option price per day (time decay)"
-                )
-            
-            with col5:
-                st.metric(
-                    "Rho (ρ)",
-                    f"{greeks.rho:.4f}",
-                    help="Change in option price per 1% change in interest rate"
-                )
-            
-            with col6:
-                st.metric(
-                    "Lambda (λ)",
-                    f"{greeks.lambda_:.4f}",
-                    help="Leverage ratio (elasticity)"
-                )
-            
-            st.divider()
-            
-            # Greeks visualization
-            st.markdown("#### Greeks vs Futures Price")
-            
-            # Create price range
-            price_range = np.linspace(
-                inputs['futures_price'] * 0.7,
-                inputs['futures_price'] * 1.3,
-                50
-            )
-            
-            # Calculate Greeks for each price
-            deltas = []
-            gammas = []
-            vegas = []
-            thetas = []
-            
-            for price in price_range:
-                g = greeks_calc.calculate_greeks(
-                    futures_price=price,
-                    strike_price=inputs['strike_price'],
-                    time_to_expiry=time_to_expiry,
-                    volatility=inputs['volatility'],
-                    risk_free_rate=inputs['risk_free_rate'],
-                    option_type=inputs['option_type'].lower()
-                )
-                deltas.append(g.delta)
-                gammas.append(g.gamma)
-                vegas.append(g.vega)
-                thetas.append(g.theta)
-            
-            # Create two columns for charts
-            chart_col1, chart_col2 = st.columns(2)
-            
-            with chart_col1:
-                # Delta chart
-                fig_delta = go.Figure()
-                fig_delta.add_trace(go.Scatter(
-                    x=price_range,
-                    y=deltas,
-                    mode='lines',
-                    name='Delta',
-                    line=dict(color='#2e8b57', width=3),
-                    fill='tonexty',
-                    fillcolor='rgba(46, 139, 87, 0.1)'
-                ))
-                fig_delta.add_vline(
-                    x=inputs['futures_price'],
-                    line_dash="dash",
-                    line_color="gray",
-                    annotation_text="Current Price"
-                )
-                fig_delta.update_layout(
-                    title="Delta vs Futures Price",
-                    xaxis_title="Futures Price (KES)",
-                    yaxis_title="Delta",
-                    height=350,
-                    template="plotly_white"
-                )
-                st.plotly_chart(fig_delta, use_container_width=True)
-            
-            with chart_col2:
-                # Gamma chart
-                fig_gamma = go.Figure()
-                fig_gamma.add_trace(go.Scatter(
-                    x=price_range,
-                    y=gammas,
-                    mode='lines',
-                    name='Gamma',
-                    line=dict(color='#1e6b47', width=3),
-                    fill='tonexty',
-                    fillcolor='rgba(30, 107, 71, 0.1)'
-                ))
-                fig_gamma.add_vline(
-                    x=inputs['futures_price'],
-                    line_dash="dash",
-                    line_color="gray",
-                    annotation_text="Current Price"
-                )
-                fig_gamma.update_layout(
-                    title="Gamma vs Futures Price",
-                    xaxis_title="Futures Price (KES)",
-                    yaxis_title="Gamma",
-                    height=350,
-                    template="plotly_white"
-                )
-                st.plotly_chart(fig_gamma, use_container_width=True)
-            
-            # Vega and Theta charts
-            chart_col3, chart_col4 = st.columns(2)
-            
-            with chart_col3:
-                # Vega chart
-                fig_vega = go.Figure()
-                fig_vega.add_trace(go.Scatter(
-                    x=price_range,
-                    y=vegas,
-                    mode='lines',
-                    name='Vega',
-                    line=dict(color='#ff8c00', width=3),
-                    fill='tonexty',
-                    fillcolor='rgba(255, 140, 0, 0.1)'
-                ))
-                fig_vega.add_vline(
-                    x=inputs['futures_price'],
-                    line_dash="dash",
-                    line_color="gray",
-                    annotation_text="Current Price"
-                )
-                fig_vega.update_layout(
-                    title="Vega vs Futures Price",
-                    xaxis_title="Futures Price (KES)",
-                    yaxis_title="Vega",
-                    height=350,
-                    template="plotly_white"
-                )
-                st.plotly_chart(fig_vega, use_container_width=True)
-            
-            with chart_col4:
-                # Theta chart
-                fig_theta = go.Figure()
-                fig_theta.add_trace(go.Scatter(
-                    x=price_range,
-                    y=thetas,
-                    mode='lines',
-                    name='Theta',
-                    line=dict(color='#dc143c', width=3),
-                    fill='tonexty',
-                    fillcolor='rgba(220, 20, 60, 0.1)'
-                ))
-                fig_theta.add_vline(
-                    x=inputs['futures_price'],
-                    line_dash="dash",
-                    line_color="gray",
-                    annotation_text="Current Price"
-                )
-                fig_theta.update_layout(
-                    title="Theta vs Futures Price",
-                    xaxis_title="Futures Price (KES)",
-                    yaxis_title="Theta (per day)",
-                    height=350,
-                    template="plotly_white"
-                )
-                st.plotly_chart(fig_theta, use_container_width=True)
-            
-            st.divider()
-            
-            # Greeks interpretation
-            st.markdown("#### Greeks Interpretation")
-            
-            with st.expander("Delta - Directional Risk", expanded=False):
-                delta_sign = "positive" if greeks.delta > 0 else "negative"
-                st.markdown(f"""
-                **Current Delta: {greeks.delta:.4f}**
-                
-                - Your {inputs['option_type']} option has a **{delta_sign}** delta
-                - For every KES 1 increase in futures price, option price changes by approximately **KES {abs(greeks.delta):.4f}**
-                - Delta ranges from 0 to 1 for calls, -1 to 0 for puts
-                - At-the-money options have delta around ±0.5
-                """)
-            
-            with st.expander("Gamma - Delta Sensitivity", expanded=False):
-                st.markdown(f"""
-                **Current Gamma: {greeks.gamma:.6f}**
-                
-                - Gamma measures how quickly delta changes
-                - For every KES 1 change in futures price, delta changes by **{greeks.gamma:.6f}**
-                - Highest gamma occurs at-the-money
-                - Important for managing delta hedging strategies
-                """)
-            
-            with st.expander("Vega - Volatility Risk", expanded=False):
-                st.markdown(f"""
-                **Current Vega: {greeks.vega:.4f}**
-                
-                - For every 1% increase in volatility, option price increases by **KES {greeks.vega:.4f}**
-                - Long options have positive vega (benefit from volatility increase)
-                - Vega is highest for at-the-money options
-                - Important for volatility trading strategies
-                """)
-            
-            with st.expander("Theta - Time Decay", expanded=False):
-                theta_per_week = greeks.theta * 7
-                st.markdown(f"""
-                **Current Theta: {greeks.theta:.4f} per day**
-                
-                - Option loses approximately **KES {abs(greeks.theta):.4f}** per day due to time decay
-                - Weekly decay: **KES {abs(theta_per_week):.2f}**
-                - Theta accelerates as expiration approaches
-                - Long options have negative theta (time works against you)
-                """)
-            
-            with st.expander("Rho - Interest Rate Risk", expanded=False):
-                st.markdown(f"""
-                **Current Rho: {greeks.rho:.4f}**
-                
-                - For every 1% increase in interest rates, option price changes by **KES {greeks.rho:.4f}**
-                - Usually the least important Greek for short-term options
-                - More significant for longer-dated options
-                """)
-            
-            with st.expander("Lambda - Leverage", expanded=False):
-                st.markdown(f"""
-                **Current Lambda: {greeks.lambda_:.4f}**
-                
-                - Lambda measures the leverage of the option position
-                - A value of {greeks.lambda_:.2f} means a 1% change in futures price results in approximately **{greeks.lambda_:.2f}%** change in option price
-                - Higher lambda = higher leverage and risk
-                """)
-            
-        except Exception as e:
-            st.error(f"Greeks calculation failed: {str(e)}")
-            logger.error(f"Greeks error: {e}", exc_info=True)
-
 elif page == "ML Predictions":
     st.markdown("### Machine Learning Analysis")
 
@@ -1351,35 +1186,35 @@ elif page == "Settings":
             st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
             st.rerun()
     
-    st.markdown("---")
+    # st.markdown("---")
     
-    st.markdown("""
-    **Theme Features:**
-    - Toggle between light and dark modes
-    - Custom color schemes for each theme
-    - Optimized chart colors for readability
-    - NSE-inspired green accent colors
-    """)
+    # st.markdown("""
+    # **Theme Features:**
+    # - Toggle between light and dark modes
+    # - Custom color schemes for each theme
+    # - Optimized chart colors for readability
+    # - NSE-inspired green accent colors
+    # """)
 
-    st.divider()
+    # st.divider()
 
-    st.subheader("Display Settings")
-    show_advanced = st.checkbox("Show Advanced Metrics", value=True)
-    show_tooltips = st.checkbox("Show Helpful Tooltips", value=True)
+    # st.subheader("Display Settings")
+    # show_advanced = st.checkbox("Show Advanced Metrics", value=True)
+    # show_tooltips = st.checkbox("Show Helpful Tooltips", value=True)
     
-    st.divider()
+    # st.divider()
 
-    st.subheader("Application Information")
-    st.info("""
-    **NSE Options Pricing Tool v2.0**
+    # st.subheader("Application Information")
+    # st.info("""
+    # **NSE Options Pricing Tool v2.0**
 
-    - **Framework**: Streamlit
-    - **Pricing Model**: Black-76
-    - **Greeks**: Delta, Gamma, Theta, Vega, Rho, Lambda
-    - **ML Models**: GARCH, LSTM Volatility Prediction (Coming Soon)
-    - **Data Source**: NSE & Yahoo Finance
-    - **Advanced Analytics**: Heatmaps, P&L Analysis
-    - **Themes**: Light & Dark Mode
+    # - **Framework**: Streamlit
+    # - **Pricing Model**: Black-76
+    # - **Greeks**: Delta, Gamma, Theta, Vega, Rho, Lambda
+    # - **ML Models**: GARCH, LSTM Volatility Prediction (Coming Soon)
+    # - **Data Source**: NSE & Yahoo Finance
+    # - **Advanced Analytics**: Heatmaps, P&L Analysis
+    # - **Themes**: Light & Dark Mode
 
-    Built for the Kenyan securities market.
-    """)
+    # Built for the Kenyan securities market.
+    # """)
