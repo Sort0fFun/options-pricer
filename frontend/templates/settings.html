@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-6 rounded-lg text-white shadow-lg mb-6">
+    <h2 class="text-3xl font-bold">Settings</h2>
+    <p class="mt-2 opacity-90">Customize your NSE Options Pricer experience</p>
+</div>
+
+<!-- Settings Content -->
+<div class="max-w-2xl mx-auto">
+    <div class="card">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Appearance</h3>
+
+        <!-- Theme Setting -->
+        <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Theme</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Choose your preferred color scheme
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button
+                        id="theme-light-btn"
+                        class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-nse-primary transition-colors"
+                        onclick="Settings.setTheme('light')"
+                    >
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <span>Light</span>
+                        </div>
+                    </button>
+                    <button
+                        id="theme-dark-btn"
+                        class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-nse-primary transition-colors"
+                        onclick="Settings.setTheme('dark')"
+                    >
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                            <span>Dark</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Data Management</h4>
+
+            <div class="space-y-3">
+                <button
+                    onclick="Settings.clearCalculatorData()"
+                    class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                >
+                    <div class="font-medium text-gray-900 dark:text-white">Clear Calculator Data</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Reset all saved calculator inputs
+                    </div>
+                </button>
+
+                <button
+                    onclick="Settings.clearChatHistory()"
+                    class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                >
+                    <div class="font-medium text-gray-900 dark:text-white">Clear Chat History</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Delete all Flavia AI conversation history
+                    </div>
+                </button>
+
+                <button
+                    onclick="Settings.clearAllData()"
+                    class="w-full px-4 py-3 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 border border-red-300 dark:border-red-800 rounded-lg text-left transition-colors"
+                >
+                    <div class="font-medium text-red-900 dark:text-red-400">Clear All Data</div>
+                    <div class="text-sm text-red-700 dark:text-red-500 mt-1">
+                        Reset all settings and clear all stored data
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- About -->
+        <div>
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h4>
+            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                <p><strong>NSE Options Pricer</strong></p>
+                <p>Version 2.0 (Flask Edition)</p>
+                <p>Built with Flask, Tailwind CSS, and Plotly.js</p>
+                <p class="mt-4">
+                    © 2026 NSE Options Pricer. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Message Area -->
+    <div id="settings-message" class="mt-4"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const Settings = {
+    setTheme(theme) {
+        ThemeManager.setTheme(theme);
+        this.updateThemeButtons();
+        this.showMessage('Theme updated successfully', 'success');
+    },
+
+    updateThemeButtons() {
+        const currentTheme = ThemeManager.getCurrentTheme();
+        const lightBtn = document.getElementById('theme-light-btn');
+        const darkBtn = document.getElementById('theme-dark-btn');
+
+        if (currentTheme === 'dark') {
+            darkBtn.classList.add('border-nse-primary', 'bg-nse-primary/10');
+            lightBtn.classList.remove('border-nse-primary', 'bg-nse-primary/10');
+        } else {
+            lightBtn.classList.add('border-nse-primary', 'bg-nse-primary/10');
+            darkBtn.classList.remove('border-nse-primary', 'bg-nse-primary/10');
+        }
+    },
+
+    clearCalculatorData() {
+        if (confirm('Are you sure you want to clear all calculator data?')) {
+            Storage.remove(Storage.KEYS.CALCULATOR_INPUTS);
+            this.showMessage('Calculator data cleared', 'success');
+        }
+    },
+
+    clearChatHistory() {
+        if (confirm('Are you sure you want to clear all chat history?')) {
+            Storage.remove(Storage.KEYS.CHAT_HISTORY);
+            this.showMessage('Chat history cleared', 'success');
+        }
+    },
+
+    clearAllData() {
+        if (confirm('Are you sure you want to clear ALL data? This action cannot be undone.')) {
+            Storage.clear();
+            this.showMessage('All data cleared. Refreshing page...', 'success');
+            setTimeout(() => window.location.reload(), 2000);
+        }
+    },
+
+    showMessage(message, type = 'success') {
+        const container = document.getElementById('settings-message');
+        const bgColor = type === 'success' ? 'bg-green-100 dark:bg-green-900/20 border-green-400 dark:border-green-800 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/20 border-red-400 dark:border-red-800 text-red-700 dark:text-red-400';
+
+        container.innerHTML = `
+            <div class="${bgColor} px-4 py-3 rounded relative border" role="alert">
+                <span class="block sm:inline">${message}</span>
+            </div>
+        `;
+
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 3000);
+    },
+
+    init() {
+        this.updateThemeButtons();
+    }
+};
+
+// Initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => Settings.init());
+} else {
+    Settings.init();
+}
+</script>
+{% endblock %}

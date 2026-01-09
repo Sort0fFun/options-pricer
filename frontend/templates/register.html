@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Register - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-8">
+    <div class="max-w-md w-full">
+        <!-- Register Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-nse-dark to-nse-primary rounded-full mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h2>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Join NSE Options Pricer today</p>
+            </div>
+
+            <!-- Register Form -->
+            <form id="register-form" class="space-y-5">
+                <!-- Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Full Name
+                    </label>
+                    <input type="text" id="name" name="name" required minlength="2"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                        placeholder="John Doe">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email Address
+                    </label>
+                    <input type="email" id="email" name="email" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                        placeholder="you@example.com">
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required minlength="8"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                            placeholder="••••••••">
+                        <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Min 8 characters, must include a letter and a number
+                    </p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Confirm Password
+                    </label>
+                    <input type="password" id="confirm-password" name="confirm-password" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                        placeholder="••••••••">
+                </div>
+
+                <!-- Terms -->
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms" required
+                        class="w-4 h-4 mt-1 text-nse-primary border-gray-300 rounded focus:ring-nse-primary">
+                    <label for="terms" class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                        I agree to the <a href="#" class="text-nse-primary hover:underline">Terms of Service</a> and <a href="#" class="text-nse-primary hover:underline">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <!-- Error Message -->
+                <div id="register-error" class="hidden p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                </div>
+
+                <!-- Success Message -->
+                <div id="register-success" class="hidden p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="register-btn"
+                    class="w-full py-3 px-4 bg-gradient-to-r from-nse-dark to-nse-primary text-white font-semibold rounded-lg hover:from-nse-primary hover:to-nse-secondary focus:outline-none focus:ring-2 focus:ring-nse-primary focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="register-btn-text">Create Account</span>
+                    <svg id="register-spinner" class="hidden animate-spin inline-block w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="mt-8 flex items-center">
+                <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+                <span class="px-4 text-sm text-gray-500 dark:text-gray-400">Already have an account?</span>
+                <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <a href="/login" class="text-nse-primary hover:text-nse-secondary font-medium transition-colors">
+                    Sign in instead
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/components/auth.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('register-form');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const registerBtn = document.getElementById('register-btn');
+    const registerBtnText = document.getElementById('register-btn-text');
+    const registerSpinner = document.getElementById('register-spinner');
+    const errorDiv = document.getElementById('register-error');
+    const successDiv = document.getElementById('register-success');
+    const togglePassword = document.getElementById('toggle-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    const eyeOffIcon = document.getElementById('eye-off-icon');
+
+    // Toggle password visibility
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        eyeIcon.classList.toggle('hidden');
+        eyeOffIcon.classList.toggle('hidden');
+    });
+
+    // Real-time password validation
+    passwordInput.addEventListener('input', function() {
+        const password = passwordInput.value;
+        const hasLetter = /[A-Za-z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const isLongEnough = password.length >= 8;
+
+        if (password.length > 0 && (!hasLetter || !hasNumber || !isLongEnough)) {
+            passwordInput.classList.add('border-yellow-500');
+            passwordInput.classList.remove('border-green-500');
+        } else if (password.length >= 8 && hasLetter && hasNumber) {
+            passwordInput.classList.add('border-green-500');
+            passwordInput.classList.remove('border-yellow-500');
+        } else {
+            passwordInput.classList.remove('border-yellow-500', 'border-green-500');
+        }
+    });
+
+    // Confirm password validation
+    confirmPasswordInput.addEventListener('input', function() {
+        if (confirmPasswordInput.value !== passwordInput.value) {
+            confirmPasswordInput.classList.add('border-red-500');
+            confirmPasswordInput.classList.remove('border-green-500');
+        } else if (confirmPasswordInput.value.length > 0) {
+            confirmPasswordInput.classList.add('border-green-500');
+            confirmPasswordInput.classList.remove('border-red-500');
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Clear previous messages
+        errorDiv.classList.add('hidden');
+        successDiv.classList.add('hidden');
+
+        // Validate passwords match
+        if (passwordInput.value !== confirmPasswordInput.value) {
+            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        // Validate password strength
+        const password = passwordInput.value;
+        if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+            errorDiv.textContent = 'Password must be at least 8 characters and include a letter and a number';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        // Show loading state
+        registerBtn.disabled = true;
+        registerBtnText.textContent = 'Creating account...';
+        registerSpinner.classList.remove('hidden');
+
+        try {
+            const result = await Auth.register(
+                emailInput.value,
+                passwordInput.value,
+                nameInput.value
+            );
+            
+            if (result.success) {
+                successDiv.textContent = 'Account created successfully! Redirecting...';
+                successDiv.classList.remove('hidden');
+                
+                // Redirect to home page after a short delay
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                throw new Error(result.message || 'Registration failed');
+            }
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.classList.remove('hidden');
+            registerBtn.disabled = false;
+            registerBtnText.textContent = 'Create Account';
+            registerSpinner.classList.add('hidden');
+        }
+    });
+
+    // Check if already logged in
+    if (Auth.isLoggedIn()) {
+        window.location.href = '/';
+    }
+});
+</script>
+{% endblock %}

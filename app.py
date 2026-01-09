@@ -188,16 +188,6 @@ def get_theme_css(theme='light'):
         fill: white !important;
     }
 
-    /* Checkbox styling - dark mode */
-    .stCheckbox [data-baseweb="checkbox"] input:checked + div {
-        background-color: #1A4D2E !important;
-        border-color: #1A4D2E !important;
-    }
-    .stCheckbox [data-baseweb="checkbox"] div {
-        border-color: #1A4D2E !important;
-    }
-
-
     .stMarkdown {
         color: #e8f5e9;
     }
@@ -316,16 +306,6 @@ def get_theme_css(theme='light'):
     .stMultiSelect [data-baseweb="tag"] svg {
         fill: white !important;
     }
-
-    /* Checkbox styling - light mode */
-    .stCheckbox [data-baseweb="checkbox"] input:checked + div {
-        background-color: #1A4D2E !important;
-        border-color: #1A4D2E !important;
-    }
-    .stCheckbox [data-baseweb="checkbox"] div {
-        border-color: #1A4D2E !important;
-    }
-
     div[data-testid="stMetricValue"] {
         color: #2e8b57;
     }
@@ -740,20 +720,22 @@ if page == "Option Calculator":
                     key="hm_max_spot"
                 )
             with hm_param_cols[1]:
+                min_vol_default = max(0.05, inputs['volatility'] - 0.15)
                 min_vol_hm = st.slider(
-                    "Min Volatility for Heatmap",
+                    f"Min Volatility for Heatmap: (**{st.session_state.get('hm_min_vol', min_vol_default):.2f}**)",
                     min_value=0.05,
                     max_value=0.50,
-                    value=max(0.05, inputs['volatility'] - 0.15),
+                    value=min_vol_default,
                     step=0.01,
                     format="%.2f",
                     key="hm_min_vol"
                 )
+                max_vol_default = min(1.0, inputs['volatility'] + 0.15)
                 max_vol_hm = st.slider(
-                    "Max Volatility for Heatmap",
+                    f"Max Volatility for Heatmap: (**{st.session_state.get('hm_max_vol', max_vol_default):.2f}**)",
                     min_value=0.15,
                     max_value=1.0,
-                    value=min(1.0, inputs['volatility'] + 0.15),
+                    value=max_vol_default,
                     step=0.01,
                     format="%.2f",
                     key="hm_max_vol"

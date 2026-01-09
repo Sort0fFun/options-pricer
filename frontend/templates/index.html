@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Option Calculator - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<!-- Main Header -->
+<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-8 rounded-lg text-white shadow-lg mb-6">
+    <h2 class="text-3xl font-bold m-0">Welcome to NSE Options Calculator</h2>
+    <p class="mt-2 opacity-90">Powered by Black-76 Model • Real-time Analytics</p>
+</div>
+
+<!-- Main Layout -->
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Input Parameters</h3>
+
+        <form id="calculator-form" class="space-y-4">
+            <!-- Contract Selection -->
+            <div>
+                <label class="input-label" for="contract">Futures Contract</label>
+                <select id="contract" class="input-field">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+
+            <!-- Futures Price -->
+            <div>
+                <label class="input-label" for="futures_price">Current Futures Price (KES)</label>
+                <input type="number" id="futures_price" class="input-field" value="100.0" step="0.1" min="0">
+            </div>
+
+            <!-- Strike Price -->
+            <div>
+                <label class="input-label" for="strike_price">Strike Price (KES)</label>
+                <input type="number" id="strike_price" class="input-field" value="100.0" step="0.1" min="0">
+            </div>
+
+            <!-- Days to Expiry -->
+            <div>
+                <label class="input-label" for="days_to_expiry">Days to Expiry</label>
+                <input type="number" id="days_to_expiry" class="input-field" value="30" min="1" max="365">
+            </div>
+
+            <!-- Volatility Slider -->
+            <div>
+                <label class="input-label" for="volatility">Volatility</label>
+                <input type="range" id="volatility" class="w-full" min="10" max="100" value="30">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Current: <span id="volatility-display">30</span>%</p>
+            </div>
+
+            <!-- Risk-Free Rate -->
+            <div>
+                <label class="input-label" for="risk_free_rate">Risk-Free Rate (%)</label>
+                <input type="number" id="risk_free_rate" class="input-field" value="12.0" step="0.1" min="0" max="100">
+            </div>
+
+            <!-- Option Type -->
+            <div>
+                <label class="input-label">Option Type</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="option_type" value="call" checked class="mr-2">
+                        <span class="text-gray-700 dark:text-gray-300">Call</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="option_type" value="put" class="mr-2">
+                        <span class="text-gray-700 dark:text-gray-300">Put</span>
+                    </label>
+                </div>
+            </div>
+
+            <hr class="border-gray-300 dark:border-gray-600">
+
+            <!-- NSE Market Fees -->
+            <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Market Fees</h4>
+                <label class="flex items-center">
+                    <input type="checkbox" id="include_fees" class="mr-2">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Include NSE Market Fees</span>
+                </label>
+            </div>
+
+            <!-- Fee Breakdown (Hidden by default) -->
+            <div id="fee-breakdown" class="hidden p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h5 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Fee Breakdown</h5>
+                <table class="w-full text-sm">
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-1 text-gray-700 dark:text-gray-300">NSE Clear</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.0125%</td>
+                    </tr>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-1 text-gray-700 dark:text-gray-300">Clearing Member</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.0125%</td>
+                    </tr>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-1 text-gray-700 dark:text-gray-300">Trading Member</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.05%</td>
+                    </tr>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-1 text-gray-700 dark:text-gray-300">IPF Levy</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.005%</td>
+                    </tr>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <td class="py-1 text-gray-700 dark:text-gray-300">CMA Fee</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.005%</td>
+                    </tr>
+                    <tr class="font-bold">
+                        <td class="py-1 text-gray-900 dark:text-white">Total</td>
+                        <td class="py-1 text-right text-gray-900 dark:text-white">0.085%</td>
+                    </tr>
+                </table>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">Fees calculated on notional contract value</p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Pricing Summary -->
+        <div id="pricing-summary" class="card">
+            <h3 class="card-header">Black-76 Pricing Model Summary</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="pricing-metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Current Asset Price</div>
+                    <div class="metric-value">KES <span id="metric-price">100.00</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Strike Price</div>
+                    <div class="metric-value">KES <span id="metric-strike">100.00</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Time to Maturity</div>
+                    <div class="metric-value"><span id="metric-time">0.0822</span> yrs</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Volatility</div>
+                    <div class="metric-value"><span id="metric-volatility">30</span>%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Risk-Free Rate</div>
+                    <div class="metric-value"><span id="metric-rate">12.0</span>%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call/Put Value Boxes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="value-box-call">
+                <div class="value-box-label">Call Option Value</div>
+                <div class="value-box-value">KES <span id="call-value">0.00</span></div>
+            </div>
+            <div class="value-box-put">
+                <div class="value-box-label">Put Option Value</div>
+                <div class="value-box-value">KES <span id="put-value">0.00</span></div>
+            </div>
+        </div>
+
+        <!-- Heatmaps -->
+        <div class="card">
+            <h3 class="card-header">Option Price Heatmaps</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Call Price Heatmap</h4>
+                    <div id="call-heatmap" class="w-full h-96"></div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Put Price Heatmap</h4>
+                    <div id="put-heatmap" class="w-full h-96"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NSE Futures Market Overview -->
+        <div class="card">
+            <h3 class="card-header">NSE Futures Market Overview</h3>
+            <div id="market-data-container">
+                <div class="flex justify-center items-center py-8">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/components/calculator.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/charts.js') }}"></script>
+{% endblock %}

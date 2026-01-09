@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Flavia AI - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-6 rounded-lg text-white shadow-lg mb-6">
+    <h2 class="text-3xl font-bold">Flavia AI - Options Trading Assistant</h2>
+    <p class="mt-2 opacity-90">Ask me anything about options trading, pricing models, or market strategies</p>
+</div>
+
+<!-- Main Layout -->
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Chat Container -->
+    <div class="flex-1">
+        <div class="card">
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="chat-container mb-4">
+                <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+                    <p>Welcome! I'm Flavia AI, your options trading assistant.</p>
+                    <p class="text-sm mt-2">Ask me a question or click a suggestion to get started.</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="flex gap-2">
+                <input
+                    type="text"
+                    id="chat-input"
+                    class="input-field flex-1"
+                    placeholder="Type your question here..."
+                    maxlength="2000"
+                />
+                <button id="send-btn" class="btn-primary">Send</button>
+                <button id="clear-btn" class="btn-secondary">Clear</button>
+            </div>
+
+            <!-- Export Button -->
+            <div class="mt-4 flex justify-end">
+                <button id="export-btn" class="btn-secondary text-sm">Export Conversation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar with Suggestions -->
+    <div class="w-full lg:w-80">
+        <div class="card">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Suggested Questions</h3>
+            <div id="suggestions-container" class="space-y-2">
+                <div class="flex justify-center py-4">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/components/chatbot.js') }}"></script>
+{% endblock %}

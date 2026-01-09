@@ -3,12 +3,17 @@ Flavia AI Chatbot - NSE Options Trading Assistant
 Specialized ChatGPT-powered assistant for Kenyan securities market
 """
 
+import os
 import streamlit as st
 from openai import OpenAI
 from typing import List, Dict, Optional
 import json
 from datetime import datetime
 import pandas as pd
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class FlaviaAIBot:
     """
@@ -16,11 +21,9 @@ class FlaviaAIBot:
     Specialized in Kenyan securities market, NSE options, and futures trading
     """
 
-    DEFAULT_API_KEY = "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"
-
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize Flavia with OpenAI API key"""
-        self.api_key = api_key or self.DEFAULT_API_KEY
+        """Initialize Flavia with OpenAI API key from environment"""
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key) if self.api_key else None
         
         # Flavia's personality and expertise
@@ -218,7 +221,7 @@ def render_flavia_chat():
     st.title("Chat with Flavia")
     st.markdown("*Your AI assistant for NSE options trading and Kenyan securities market*")
 
-    # Initialize Flavia with hardcoded API key
+    # Initialize Flavia with API key from environment
     flavia = FlaviaAIBot()
     
     # Chat interface

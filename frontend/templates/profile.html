@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Manage your account settings and preferences</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <!-- Avatar -->
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-nse-dark to-nse-primary rounded-full mb-4">
+                        <span id="avatar-initials" class="text-3xl font-bold text-white">JD</span>
+                    </div>
+                    <h2 id="profile-name" class="text-xl font-bold text-gray-900 dark:text-white">Loading...</h2>
+                    <p id="profile-email" class="text-gray-600 dark:text-gray-400">loading@example.com</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">Member since</span>
+                        <span id="member-since" class="font-medium text-gray-900 dark:text-white">-</span>
+                    </div>
+                </div>
+
+                <!-- Logout Button -->
+                <button id="logout-btn" class="w-full mt-6 py-2 px-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Cards -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
+                
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label for="edit-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Display Name
+                        </label>
+                        <input type="text" id="edit-name" name="name" 
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                            placeholder="Your name">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email Address
+                        </label>
+                        <input type="email" id="edit-email" disabled
+                            class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
+                    </div>
+
+                    <div id="profile-update-message" class="hidden p-3 rounded-lg text-sm"></div>
+
+                    <button type="submit" id="save-profile-btn"
+                        class="px-6 py-2 bg-nse-primary text-white font-medium rounded-lg hover:bg-nse-secondary transition-colors disabled:opacity-50">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+
+            <!-- Change Password -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h3>
+                
+                <form id="password-form" class="space-y-4">
+                    <div>
+                        <label for="current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Current Password
+                        </label>
+                        <input type="password" id="current-password" name="current_password" required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                            placeholder="••••••••">
+                    </div>
+
+                    <div>
+                        <label for="new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            New Password
+                        </label>
+                        <input type="password" id="new-password" name="new_password" required minlength="8"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                            placeholder="••••••••">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Min 8 characters, must include a letter and a number</p>
+                    </div>
+
+                    <div>
+                        <label for="confirm-new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Confirm New Password
+                        </label>
+                        <input type="password" id="confirm-new-password" required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all"
+                            placeholder="••••••••">
+                    </div>
+
+                    <div id="password-update-message" class="hidden p-3 rounded-lg text-sm"></div>
+
+                    <button type="submit" id="change-password-btn"
+                        class="px-6 py-2 bg-nse-primary text-white font-medium rounded-lg hover:bg-nse-secondary transition-colors disabled:opacity-50">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+
+            <!-- Preferences -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preferences</h3>
+                
+                <form id="preferences-form" class="space-y-4">
+                    <div>
+                        <label for="pref-theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Theme
+                        </label>
+                        <select id="pref-theme" 
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="pref-contract" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Default Contract
+                        </label>
+                        <select id="pref-contract" 
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent transition-all">
+                            <option value="">Select a default contract</option>
+                            <option value="SCOM">Safaricom (SCOM)</option>
+                            <option value="EQTY">Equity Bank (EQTY)</option>
+                            <option value="KCB">KCB Group (KCB)</option>
+                            <option value="ABSA">ABSA Bank Kenya (ABSA)</option>
+                            <option value="COOP">Co-op Bank (COOP)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="pref-notifications" 
+                            class="w-4 h-4 text-nse-primary border-gray-300 rounded focus:ring-nse-primary">
+                        <label for="pref-notifications" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                            Enable notifications
+                        </label>
+                    </div>
+
+                    <div id="preferences-update-message" class="hidden p-3 rounded-lg text-sm"></div>
+
+                    <button type="submit" id="save-preferences-btn"
+                        class="px-6 py-2 bg-nse-primary text-white font-medium rounded-lg hover:bg-nse-secondary transition-colors disabled:opacity-50">
+                        Save Preferences
+                    </button>
+                </form>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border-2 border-red-200 dark:border-red-900">
+                <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Danger Zone</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Once you delete your account, there is no going back. Please be certain.
+                </p>
+                <button id="delete-account-btn"
+                    class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Delete Account</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+            Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+        </p>
+        <div class="flex justify-end space-x-4">
+            <button id="cancel-delete" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Cancel
+            </button>
+            <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                Yes, Delete My Account
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/components/auth.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication
+    if (!Auth.isLoggedIn()) {
+        window.location.href = '/login?redirect=/profile';
+        return;
+    }
+
+    // DOM Elements
+    const avatarInitials = document.getElementById('avatar-initials');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const memberSince = document.getElementById('member-since');
+    const editName = document.getElementById('edit-name');
+    const editEmail = document.getElementById('edit-email');
+    const prefTheme = document.getElementById('pref-theme');
+    const prefContract = document.getElementById('pref-contract');
+    const prefNotifications = document.getElementById('pref-notifications');
+
+    // Load user profile
+    async function loadProfile() {
+        try {
+            const result = await Auth.getProfile();
+            if (result.success) {
+                const user = result.data;
+                
+                // Update avatar
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                avatarInitials.textContent = initials;
+                
+                // Update profile info
+                profileName.textContent = user.name;
+                profileEmail.textContent = user.email;
+                editName.value = user.name;
+                editEmail.value = user.email;
+                
+                // Format member since
+                if (user.created_at) {
+                    const date = new Date(user.created_at);
+                    memberSince.textContent = date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        year: 'numeric' 
+                    });
+                }
+                
+                // Update preferences
+                if (user.preferences) {
+                    prefTheme.value = user.preferences.theme || 'light';
+                    prefContract.value = user.preferences.default_contract || '';
+                    prefNotifications.checked = user.preferences.notifications_enabled !== false;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load profile:', error);
+        }
+    }
+
+    // Profile form submission
+    document.getElementById('profile-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const messageDiv = document.getElementById('profile-update-message');
+        const btn = document.getElementById('save-profile-btn');
+        
+        btn.disabled = true;
+        try {
+            const result = await Auth.updateProfile({ name: editName.value });
+            if (result.success) {
+                messageDiv.textContent = 'Profile updated successfully!';
+                messageDiv.className = 'p-3 rounded-lg text-sm bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400';
+                profileName.textContent = editName.value;
+                avatarInitials.textContent = editName.value.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            messageDiv.textContent = error.message;
+            messageDiv.className = 'p-3 rounded-lg text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400';
+        }
+        messageDiv.classList.remove('hidden');
+        btn.disabled = false;
+    });
+
+    // Password form submission
+    document.getElementById('password-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const messageDiv = document.getElementById('password-update-message');
+        const btn = document.getElementById('change-password-btn');
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-new-password').value;
+        
+        if (newPassword !== confirmPassword) {
+            messageDiv.textContent = 'New passwords do not match';
+            messageDiv.className = 'p-3 rounded-lg text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400';
+            messageDiv.classList.remove('hidden');
+            return;
+        }
+
+        btn.disabled = true;
+        try {
+            const result = await Auth.updateProfile({
+                current_password: document.getElementById('current-password').value,
+                new_password: newPassword
+            });
+            if (result.success) {
+                messageDiv.textContent = 'Password updated successfully!';
+                messageDiv.className = 'p-3 rounded-lg text-sm bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400';
+                document.getElementById('password-form').reset();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            messageDiv.textContent = error.message;
+            messageDiv.className = 'p-3 rounded-lg text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400';
+        }
+        messageDiv.classList.remove('hidden');
+        btn.disabled = false;
+    });
+
+    // Preferences form submission
+    document.getElementById('preferences-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const messageDiv = document.getElementById('preferences-update-message');
+        const btn = document.getElementById('save-preferences-btn');
+        
+        btn.disabled = true;
+        try {
+            const result = await Auth.updatePreferences({
+                theme: prefTheme.value,
+                default_contract: prefContract.value || null,
+                notifications_enabled: prefNotifications.checked
+            });
+            if (result.success) {
+                messageDiv.textContent = 'Preferences updated successfully!';
+                messageDiv.className = 'p-3 rounded-lg text-sm bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400';
+                
+                // Apply theme change
+                if (prefTheme.value === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                localStorage.setItem('theme', prefTheme.value);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            messageDiv.textContent = error.message;
+            messageDiv.className = 'p-3 rounded-lg text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400';
+        }
+        messageDiv.classList.remove('hidden');
+        btn.disabled = false;
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', function() {
+        Auth.logout();
+        window.location.href = '/login';
+    });
+
+    // Delete account modal
+    const deleteModal = document.getElementById('delete-modal');
+    document.getElementById('delete-account-btn').addEventListener('click', function() {
+        deleteModal.classList.remove('hidden');
+    });
+    document.getElementById('cancel-delete').addEventListener('click', function() {
+        deleteModal.classList.add('hidden');
+    });
+    document.getElementById('confirm-delete').addEventListener('click', async function() {
+        try {
+            const result = await Auth.deleteAccount();
+            if (result.success) {
+                Auth.logout();
+                window.location.href = '/login';
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            alert('Failed to delete account: ' + error.message);
+        }
+    });
+
+    // Load profile data
+    await loadProfile();
+});
+</script>
+{% endblock %}
