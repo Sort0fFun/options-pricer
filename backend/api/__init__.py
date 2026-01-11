@@ -2,7 +2,7 @@
 API Blueprint initialization with Flask-RESTX.
 """
 from flask import Blueprint
-from flask_restx import Api
+from flask_restx import Api, Resource
 
 # Create API blueprint
 api_bp = Blueprint('api', __name__)
@@ -16,6 +16,12 @@ api = Api(
     doc='/doc'
 )
 
+# Health check endpoint
+@api_bp.route('/health')
+def health_check():
+    """Health check endpoint for Docker/Kubernetes."""
+    return {'status': 'healthy', 'service': 'options-pricer-api'}, 200
+
 # Import and add namespaces
 from backend.api import pricing, market, chatbot, pnl, auth, wallet
 
@@ -26,3 +32,4 @@ api.add_namespace(chatbot.ns, path='/chat')
 api.add_namespace(pnl.ns, path='/pnl')
 api.add_namespace(auth.ns, path='/auth')
 api.add_namespace(wallet.wallet_ns, path='/wallet')
+

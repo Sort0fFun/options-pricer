@@ -6,6 +6,15 @@ from typing import Optional, Dict, Any, List
 from bson import ObjectId
 import uuid
 
+def serialize_datetime(obj: Any) -> Any:
+    """Recursively convert datetime objects to ISO format strings."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: serialize_datetime(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [serialize_datetime(item) for item in obj]
+    return obj
 
 class WalletService:
     """Service class for wallet operations."""
@@ -70,13 +79,8 @@ class WalletService:
             'last_updated': None
         })
         
-        # Serialize datetime fields for JSON response
-        if wallet.get('last_updated') and hasattr(wallet['last_updated'], 'isoformat'):
-            wallet['last_updated'] = wallet['last_updated'].isoformat()
-        if wallet.get('last_token_purchase') and hasattr(wallet['last_token_purchase'], 'isoformat'):
-            wallet['last_token_purchase'] = wallet['last_token_purchase'].isoformat()
-        
-        return wallet
+        # Serialize all datetime fields for JSON response
+        return serialize_datetime(wallet)
 
     @classmethod
     def ensure_wallet_exists(cls, user_id: str) -> None:
@@ -385,7 +389,7 @@ class WalletService:
         if not doc:
             return None
         
-        return {
+        result = {
             'id': doc['_id'],
             'user_id': doc['user_id'],
             'type': doc['type'],
@@ -395,6 +399,9 @@ class WalletService:
             'mpesa_receipt': doc.get('mpesa_receipt'),
             'mpesa_checkout_id': doc.get('mpesa_checkout_id'),
             'phone_number': doc.get('phone_number'),
-            'created_at': doc['created_at'].isoformat() if doc.get('created_at') else None,
-            'updated_at': doc['updated_at'].isoformat() if doc.get('updated_at') else None
+            'created_at': doc.get('created_at'),
+            'updated_at': doc.get('updated_at')
         }
+        
+        # Serialize all datetime fields
+        return serialize_datetime(result)

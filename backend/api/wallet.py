@@ -177,41 +177,103 @@ class DepositStatus(Resource):
 
 @wallet_ns.route('/callback')
 class MpesaCallback(Resource):
-    """M-Pesa callback endpoint."""
+    """M-Pesa callback endpoint - No authentication required."""
     
     def post(self):
         """Handle M-Pesa STK Push callback."""
-        data = request.get_json()
+        # Log raw request for debugging
+        raw_data = request.get_data(as_text=True)
+        current_app.logger.info(f"M-Pesa callback RAW: {raw_data}")
         
-        current_app.logger.info(f"M-Pesa callback received: {data}")
+        data = request.get_json(force=True, silent=True)
+        
+        if not data:
+            current_app.logger.error("M-Pesa callback: No JSON data received")
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}, 200
+        
+        current_app.logger.info(f"M-Pesa callback JSON: {data}")
         
         try:
             # Parse callback
             callback_result = MpesaService.parse_callback(data)
             current_app.logger.info(f"Parsed callback: {callback_result}")
             
+            checkout_id = callback_result.get('checkout_request_id')
+            if not checkout_id:
+                current_app.logger.error("M-Pesa callback: No checkout_request_id in callback")
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}, 200
+            
             if callback_result.get('success'):
                 # Payment successful
                 result = WalletService.complete_deposit(
-                    callback_result['checkout_request_id'],
+                    checkout_id,
                     callback_result.get('mpesa_receipt', ''),
                     callback_result.get('amount', 0)
                 )
-                current_app.logger.info(f"Deposit completed: {result}")
+                current_app.logger.info(f"Deposit completed for {checkout_id}: {result}")
             else:
-                # Payment failed
+                # Payment failed or cancelled
                 result = WalletService.fail_deposit(
-                    callback_result.get('checkout_request_id', ''),
+                    checkout_id,
                     callback_result.get('result_desc', 'Payment failed')
                 )
-                current_app.logger.info(f"Deposit failed: {result}")
+                current_app.logger.info(f"Deposit failed for {checkout_id}: {callback_result.get('result_desc')}")
             
             # Always return success to M-Pesa
             return {"ResultCode": 0, "ResultDesc": "Accepted"}, 200
             
         except Exception as e:
-            current_app.logger.error(f"M-Pesa callback error: {e}")
+            current_app.logger.error(f"M-Pesa callback error: {e}", exc_info=True)
             return {"ResultCode": 0, "ResultDesc": "Accepted"}, 200
+    
+    def get(self):
+        """Health check for callback URL - useful for testing if URL is reachable."""
+        return {"status": "ok", "message": "M-Pesa callback endpoint is active"}, 200
+
+
+@wallet_ns.route('/callback/simulate')
+class SimulateMpesaCallback(Resource):
+    """Simulate M-Pesa callback for testing (DEV ONLY)."""
+    
+    @jwt_required()
+    def post(self):
+        """Simulate a successful M-Pesa callback for a pending transaction."""
+        data = request.get_json()
+        checkout_id = data.get('checkout_request_id')
+        
+        if not checkout_id:
+            wallet_ns.abort(400, "checkout_request_id is required")
+        
+        # Get the pending transaction
+        transaction = WalletService.get_transaction_by_checkout_id(checkout_id)
+        
+        if not transaction:
+            wallet_ns.abort(404, "Transaction not found")
+        
+        if transaction['status'] != 'pending':
+            return {
+                'message': f"Transaction already {transaction['status']}",
+                'transaction': transaction
+            }, 200
+        
+        # Simulate successful payment
+        import random
+        import string
+        fake_receipt = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        
+        result = WalletService.complete_deposit(
+            checkout_id,
+            fake_receipt,
+            transaction['amount']
+        )
+        
+        current_app.logger.info(f"Simulated callback for {checkout_id}: {result}")
+        
+        return {
+            'message': 'Payment simulated successfully',
+            'transaction': result,
+            'wallet': WalletService.get_wallet(transaction['user_id'])
+        }, 200, 200
 
 
 @wallet_ns.route('/tokens')
