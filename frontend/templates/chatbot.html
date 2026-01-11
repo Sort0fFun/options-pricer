@@ -3,52 +3,239 @@
 {% block title %}Flavia AI - NSE Options Pricer{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-6 rounded-lg text-white shadow-lg mb-6">
-    <h2 class="text-3xl font-bold">Flavia AI - Options Trading Assistant</h2>
-    <p class="mt-2 opacity-90">Ask me anything about options trading, pricing models, or market strategies</p>
-</div>
-
-<!-- Main Layout -->
-<div class="flex flex-col lg:flex-row gap-6">
-    <!-- Chat Container -->
-    <div class="flex-1">
-        <div class="card">
-            <!-- Chat Messages -->
-            <div id="chat-messages" class="chat-container mb-4">
-                <div class="text-center text-gray-500 dark:text-gray-400 py-8">
-                    <p>Welcome! I'm Flavia AI, your options trading assistant.</p>
-                    <p class="text-sm mt-2">Ask me a question or click a suggestion to get started.</p>
+<div class="max-w-6xl mx-auto">
+    <!-- Page Header with Token Balance -->
+    <div class="bg-gradient-to-r from-nse-dark via-nse-primary to-nse-secondary p-6 rounded-2xl text-white shadow-xl mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">Flavia AI</h1>
+                        <p class="text-white/80 text-sm">Your Options Trading Assistant</p>
+                    </div>
                 </div>
             </div>
-
-            <!-- Input Area -->
-            <div class="flex gap-2">
-                <input
-                    type="text"
-                    id="chat-input"
-                    class="input-field flex-1"
-                    placeholder="Type your question here..."
-                    maxlength="2000"
-                />
-                <button id="send-btn" class="btn-primary">Send</button>
-                <button id="clear-btn" class="btn-secondary">Clear</button>
-            </div>
-
-            <!-- Export Button -->
-            <div class="mt-4 flex justify-end">
-                <button id="export-btn" class="btn-secondary text-sm">Export Conversation</button>
+            <div class="flex items-center gap-4">
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5a1 1 0 112 0v4a1 1 0 11-2 0zm1 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"></path>
+                        </svg>
+                        <span class="text-white/70 text-sm">Tokens:</span>
+                        <span id="token-balance" class="text-xl font-bold">0</span>
+                    </div>
+                    <div class="text-xs text-white/60 mt-1">
+                        <span id="daily-tokens-status">Loading...</span>
+                    </div>
+                </div>
+                <a href="/wallet" class="bg-white text-nse-dark px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Get Tokens
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Sidebar with Suggestions -->
-    <div class="w-full lg:w-80">
-        <div class="card">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Suggested Questions</h3>
-            <div id="suggestions-container" class="space-y-2">
-                <div class="flex justify-center py-4">
-                    <div class="spinner"></div>
+    <!-- Main Chat Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Chat Container - Takes 3 columns -->
+        <div class="lg:col-span-3">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden flex flex-col h-[700px]">
+                <!-- Chat Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-nse-primary to-nse-secondary rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-lg">F</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">Flavia AI</h3>
+                                <div class="flex items-center gap-1">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="clear-btn" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Clear conversation">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                            <button id="export-btn" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Export conversation">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+                    <!-- Welcome Message -->
+                    <div id="welcome-message" class="text-center py-12">
+                        <div class="w-20 h-20 bg-gradient-to-br from-nse-primary to-nse-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Flavia AI!</h3>
+                        <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                            I'm your intelligent options trading assistant. Ask me about pricing models, volatility, Greeks, strategies, or any market-related questions.
+                        </p>
+                        <div class="mt-6 flex flex-wrap justify-center gap-2">
+                            <button onclick="Chatbot.sendMessage('Explain Black-Scholes model')" class="px-4 py-2 bg-nse-primary/10 text-nse-primary rounded-full text-sm hover:bg-nse-primary/20 transition-colors">
+                                Explain Black-Scholes
+                            </button>
+                            <button onclick="Chatbot.sendMessage('What are the Greeks in options?')" class="px-4 py-2 bg-nse-primary/10 text-nse-primary rounded-full text-sm hover:bg-nse-primary/20 transition-colors">
+                                What are Greeks?
+                            </button>
+                            <button onclick="Chatbot.sendMessage('How does implied volatility work?')" class="px-4 py-2 bg-nse-primary/10 text-nse-primary rounded-full text-sm hover:bg-nse-primary/20 transition-colors">
+                                Implied Volatility
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Tokens Warning -->
+                <div id="no-tokens-warning" class="hidden px-6 py-3 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm font-medium">You're out of tokens!</span>
+                        </div>
+                        <a href="/wallet" class="text-sm font-semibold text-amber-800 dark:text-amber-200 hover:underline">
+                            Buy more tokens →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <div class="flex items-end gap-3">
+                        <div class="flex-1 relative">
+                            <textarea
+                                id="chat-input"
+                                class="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-nse-primary focus:border-transparent resize-none transition-all"
+                                placeholder="Ask Flavia anything about options trading..."
+                                rows="1"
+                                maxlength="2000"
+                            ></textarea>
+                            <span id="char-count" class="absolute right-3 bottom-3 text-xs text-gray-400">0/2000</span>
+                        </div>
+                        <button id="send-btn" class="px-6 py-3 bg-gradient-to-r from-nse-primary to-nse-secondary text-white font-semibold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2">
+                            <span>Send</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        Each message uses 1 token. Press Enter to send, Shift+Enter for new line.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Takes 1 column -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-nse-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Quick Questions
+                </h3>
+                <div id="suggestions-container" class="space-y-2">
+                    <div class="animate-pulse space-y-2">
+                        <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                        <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                        <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Info Card -->
+            <div class="bg-gradient-to-br from-nse-primary/10 to-nse-secondary/10 dark:from-nse-primary/20 dark:to-nse-secondary/20 rounded-2xl p-5 border border-nse-primary/20">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-nse-primary" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5a1 1 0 112 0v4a1 1 0 11-2 0zm1 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"></path>
+                    </svg>
+                    Token System
+                </h3>
+                <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>4 free tokens daily</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>1 token per message</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>Buy more anytime</span>
+                    </li>
+                </ul>
+                <a href="/wallet" class="mt-4 block w-full text-center py-2 bg-nse-primary text-white rounded-lg font-medium hover:bg-nse-secondary transition-colors text-sm">
+                    Manage Tokens
+                </a>
+            </div>
+
+            <!-- Capabilities -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">What I Can Help With</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900 dark:text-white">Pricing Models</div>
+                            <div class="text-gray-500 dark:text-gray-400">Black-Scholes, Binomial, Monte Carlo</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900 dark:text-white">Greeks Analysis</div>
+                            <div class="text-gray-500 dark:text-gray-400">Delta, Gamma, Theta, Vega, Rho</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900 dark:text-white">Trading Strategies</div>
+                            <div class="text-gray-500 dark:text-gray-400">Spreads, Straddles, Iron Condors</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

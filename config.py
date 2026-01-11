@@ -37,7 +37,7 @@ class Config:
     ERROR_404_HELP = False
 
     # MongoDB configuration
-    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/options_pricer')
+    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://root:ecoville@84.247.174.84:6004/options_pricer')
 
     # JWT configuration
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-dev-secret-key-change-in-production'
@@ -46,6 +46,14 @@ class Config:
     JWT_TOKEN_LOCATION = ['headers', 'cookies']
     JWT_COOKIE_SECURE = False  # Set to True in production with HTTPS
     JWT_COOKIE_CSRF_PROTECT = False  # Enable in production
+
+    # M-Pesa Daraja Configuration
+    MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', '')
+    MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', '')
+    MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
+    MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '174379')  # Sandbox default
+    MPESA_CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', 'https://yoursite.com/api/wallet/callback')
+    MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox')  # 'sandbox' or 'production'
 
 
 class DevelopmentConfig(Config):

@@ -10,12 +10,13 @@ const API = {
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        const { headers: optionHeaders, ...restOptions } = options;
         const config = {
+            ...restOptions,
             headers: {
                 'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
+                ...optionHeaders
+            }
         };
 
         try {
@@ -132,15 +133,19 @@ const API = {
     // Chat API
     chat: {
         async sendMessage(message, context = {}) {
-            return API.post('/chat/message', { message, context });
+            return API.authPost('/chat/message', { message, context });
         },
 
         async getSuggestions() {
             return API.get('/chat/suggestions');
         },
 
+        async getTokenStatus() {
+            return API.authGet('/chat/token-status');
+        },
+
         async clear() {
-            return API.post('/chat/clear', {});
+            return API.authPost('/chat/clear', {});
         }
     },
 

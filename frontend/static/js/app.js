@@ -9,6 +9,9 @@ const App = {
     async init() {
         console.log('NSE Options Pricer - Initializing...');
 
+        // Setup mobile menu toggle
+        this.setupMobileMenu();
+
         // Update market status
         await this.updateMarketStatus();
 
@@ -19,25 +22,44 @@ const App = {
     },
 
     /**
+     * Setup mobile menu toggle
+     */
+    setupMobileMenu() {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    },
+
+    /**
      * Update market status display
      */
     async updateMarketStatus() {
         try {
             const response = await API.market.getStatus();
             const statusElement = document.getElementById('market-status-text');
-            const statusContainer = document.getElementById('market-status').querySelector('span');
+            const statusBadge = document.getElementById('market-status-badge');
 
             if (statusElement && response.data) {
                 const { status, message } = response.data;
                 statusElement.textContent = `${status}: ${message}`;
 
-                // Update status badge styling
-                if (statusContainer) {
-                    statusContainer.classList.remove('market-status-open', 'market-status-closed');
+                // Update badge styling based on market status
+                if (statusBadge) {
+                    statusBadge.classList.remove(
+                        'bg-green-500/20', 'text-green-200',
+                        'bg-red-500/20', 'text-red-200',
+                        'bg-yellow-500/20', 'text-yellow-200'
+                    );
+                    
                     if (status === 'OPEN') {
-                        statusContainer.classList.add('market-status-open');
+                        statusBadge.classList.add('bg-green-500/20', 'text-green-200');
                     } else {
-                        statusContainer.classList.add('market-status-closed');
+                        statusBadge.classList.add('bg-red-500/20', 'text-red-200');
                     }
                 }
             }

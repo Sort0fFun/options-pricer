@@ -41,3 +41,8 @@ def init_app(app):
     def profile():
         """User profile page."""
         return render_template('profile.html')
+
+    @app.route('/wallet')
+    def wallet():
+        """User wallet page."""
+        return render_template('wallet.html')

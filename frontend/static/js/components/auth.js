@@ -225,28 +225,71 @@ const Auth = {
         const mobileUserLinks = document.getElementById('mobile-auth-user');
         const navInitials = document.getElementById('nav-initials');
         const navUsername = document.getElementById('nav-username');
+        const navTokens = document.getElementById('nav-tokens');
 
         if (this.isLoggedIn()) {
             const user = this.getUser();
             
             // Show user links, hide guest links
-            if (guestLinks) guestLinks.classList.add('hidden');
-            if (userLinks) userLinks.classList.remove('hidden');
+            if (guestLinks) {
+                guestLinks.classList.add('hidden');
+                guestLinks.classList.remove('sm:flex');
+            }
+            if (userLinks) {
+                userLinks.classList.remove('hidden', 'sm:hidden');
+                userLinks.classList.add('sm:flex');
+            }
             if (mobileGuestLinks) mobileGuestLinks.classList.add('hidden');
             if (mobileUserLinks) mobileUserLinks.classList.remove('hidden');
             
             // Update user info
             if (user) {
-                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
                 if (navInitials) navInitials.textContent = initials;
-                if (navUsername) navUsername.textContent = user.name.split(' ')[0];
+                if (navUsername) navUsername.textContent = user.name ? user.name.split(' ')[0] : 'User';
             }
+
+            // Load wallet tokens for nav display
+            this.loadNavTokens();
         } else {
             // Show guest links, hide user links
-            if (guestLinks) guestLinks.classList.remove('hidden');
-            if (userLinks) userLinks.classList.add('hidden');
+            if (guestLinks) {
+                guestLinks.classList.remove('hidden', 'sm:hidden');
+                guestLinks.classList.add('sm:flex');
+            }
+            if (userLinks) {
+                userLinks.classList.add('hidden');
+                userLinks.classList.remove('sm:flex');
+            }
             if (mobileGuestLinks) mobileGuestLinks.classList.remove('hidden');
             if (mobileUserLinks) mobileUserLinks.classList.add('hidden');
+            if (navTokens) navTokens.textContent = '0';
+        }
+    },
+
+    /**
+     * Load wallet tokens for nav display
+     */
+    async loadNavTokens() {
+        const navTokens = document.getElementById('nav-tokens');
+        if (!navTokens) return;
+
+        const token = this.getAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/wallet/balance', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const wallet = await response.json();
+                navTokens.textContent = wallet.chat_tokens || 0;
+            }
+        } catch (error) {
+            console.error('Error loading wallet tokens:', error);
         }
     },
 
@@ -285,20 +328,32 @@ const Auth = {
      */
     async verifySession() {
         try {
+            console.log('Verifying session...');
             const response = await API.authGet('/auth/verify');
+            console.log('Session verify response:', response);
             if (!response.success) {
+                console.log('Session invalid, trying to refresh...');
                 // Try to refresh token
                 const refreshed = await this.refreshToken();
                 if (!refreshed) {
+                    console.log('Refresh failed, logging out');
+                    this.logout();
+                }
+            } else {
+                console.log('Session is valid');
+            }
+        } catch (error) {
+            console.error('Session verify error:', error);
+            // Only logout if it's definitely an auth error, not a network error
+            if (error.message && (error.message.includes('401') || error.message.includes('Not authenticated'))) {
+                // Try to refresh token
+                const refreshed = await this.refreshToken();
+                if (!refreshed) {
+                    console.log('Refresh failed after error, logging out');
                     this.logout();
                 }
             }
-        } catch (error) {
-            // Try to refresh token
-            const refreshed = await this.refreshToken();
-            if (!refreshed) {
-                this.logout();
-            }
+            // For other errors (network, etc), don't logout
         }
     }
 };

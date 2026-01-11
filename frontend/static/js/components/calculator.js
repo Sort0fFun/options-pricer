@@ -18,6 +18,10 @@ const Calculator = {
         // Set up event listeners
         this.setupEventListeners();
 
+        // Setup UI helpers
+        this.initHeatmapParamsUI();
+        this.initMarketFiltersUI();
+
         // Initial calculation
         await this.calculate();
 
@@ -60,9 +64,11 @@ const Calculator = {
         // Volatility slider
         const volatilitySlider = document.getElementById('volatility');
         const volatilityDisplay = document.getElementById('volatility-display');
+        const volatilityPct = document.getElementById('volatility-pct');
         if (volatilitySlider) {
             volatilitySlider.addEventListener('input', (e) => {
-                volatilityDisplay.textContent = e.target.value;
+                if (volatilityDisplay) volatilityDisplay.textContent = e.target.value;
+                if (volatilityPct) volatilityPct.textContent = e.target.value;
                 this.calculate();
             });
             volatilitySlider.addEventListener('change', () => this.saveInputs());
@@ -96,6 +102,69 @@ const Calculator = {
         const contractSelect = document.getElementById('contract');
         if (contractSelect) {
             contractSelect.addEventListener('change', () => this.saveInputs());
+        }
+
+        // Heatmap params toggle
+        const toggleBtn = document.getElementById('toggle-heatmap-params');
+        const paramsEl = document.getElementById('heatmap-params');
+        const arrowEl = document.getElementById('heatmap-params-arrow');
+        if (toggleBtn && paramsEl) {
+            toggleBtn.addEventListener('click', () => {
+                const hidden = paramsEl.classList.toggle('collapsible-hidden');
+                if (arrowEl) arrowEl.textContent = hidden ? '▸' : '▾';
+            });
+        }
+
+        // Heatmap param controls
+        ['min-price-dec','min-price-inc','max-price-dec','max-price-inc'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', () => {
+                    const minPriceEl = document.getElementById('min-futures-price');
+                    const maxPriceEl = document.getElementById('max-futures-price');
+                    if (!minPriceEl || !maxPriceEl) return;
+                    const step = 1.0;
+                    const minVal = parseFloat(minPriceEl.value) || 0;
+                    const maxVal = parseFloat(maxPriceEl.value) || 0;
+                    if (id === 'min-price-dec') minPriceEl.value = (minVal - step).toFixed(2);
+                    if (id === 'min-price-inc') minPriceEl.value = (minVal + step).toFixed(2);
+                    if (id === 'max-price-dec') maxPriceEl.value = (maxVal - step).toFixed(2);
+                    if (id === 'max-price-inc') maxPriceEl.value = (maxVal + step).toFixed(2);
+                    this.calculate();
+                });
+            }
+        });
+
+        // Risk-free rate +/- buttons
+        const rateDecBtn = document.getElementById('rate-dec');
+        const rateIncBtn = document.getElementById('rate-inc');
+        const rateInput = document.getElementById('risk_free_rate');
+        if (rateDecBtn && rateInput) {
+            rateDecBtn.addEventListener('click', () => {
+                rateInput.value = Math.max(0, parseFloat(rateInput.value) - 0.5).toFixed(2);
+                this.calculate();
+            });
+        }
+        if (rateIncBtn && rateInput) {
+            rateIncBtn.addEventListener('click', () => {
+                rateInput.value = Math.min(100, parseFloat(rateInput.value) + 0.5).toFixed(2);
+                this.calculate();
+            });
+        }
+
+        const minVol = document.getElementById('min-vol');
+        const maxVol = document.getElementById('max-vol');
+        if (minVol) {
+            minVol.addEventListener('input', (e) => {
+                document.getElementById('min-vol-display').textContent = parseFloat(e.target.value).toFixed(2);
+                this.calculate();
+            });
+        }
+        if (maxVol) {
+            maxVol.addEventListener('input', (e) => {
+                document.getElementById('max-vol-display').textContent = parseFloat(e.target.value).toFixed(2);
+                this.calculate();
+            });
         }
     },
 
@@ -139,12 +208,12 @@ const Calculator = {
      * Update display with calculated values
      */
     updateDisplay(data, inputs) {
-        // Update metrics
-        document.getElementById('metric-price').textContent = Formatter.number(inputs.futures_price);
-        document.getElementById('metric-strike').textContent = Formatter.number(inputs.strike_price);
+        // Update metrics (formatted with 4 decimal places like the screenshot)
+        document.getElementById('metric-price').textContent = inputs.futures_price.toFixed(4);
+        document.getElementById('metric-strike').textContent = inputs.strike_price.toFixed(4);
         document.getElementById('metric-time').textContent = data.pricing_summary.time_to_maturity.toFixed(4);
-        document.getElementById('metric-volatility').textContent = (inputs.volatility * 100).toFixed(0);
-        document.getElementById('metric-rate').textContent = (inputs.risk_free_rate * 100).toFixed(1);
+        document.getElementById('metric-volatility').textContent = inputs.volatility.toFixed(4);
+        document.getElementById('metric-rate').textContent = inputs.risk_free_rate.toFixed(4);
 
         // Update call/put values
         const callValue = inputs.include_fees ? data.call_price_with_fees : data.call_price;
@@ -159,16 +228,7 @@ const Calculator = {
      */
     async generateHeatmaps(inputs) {
         try {
-            const heatmapParams = {
-                futures_price: inputs.futures_price,
-                strike_price: inputs.strike_price,
-                days_to_expiry: inputs.days_to_expiry,
-                volatility: inputs.volatility,
-                risk_free_rate: inputs.risk_free_rate,
-                price_range_pct: 20,
-                vol_range_pct: 50,
-                grid_size: 12
-            };
+            const heatmapParams = this.getHeatmapParams(inputs);
 
             const response = await API.pricing.heatmap(heatmapParams);
 
@@ -182,11 +242,196 @@ const Calculator = {
     },
 
     /**
+     * Build heatmap params from UI controls
+     */
+    getHeatmapParams(inputs) {
+        const minPriceEl = document.getElementById('min-futures-price');
+        const maxPriceEl = document.getElementById('max-futures-price');
+        const minVolEl = document.getElementById('min-vol');
+        const maxVolEl = document.getElementById('max-vol');
+
+        let priceRangePct = 20; // default
+        let volRangePct = 50;   // default
+
+        if (minPriceEl && maxPriceEl) {
+            const minPrice = parseFloat(minPriceEl.value) || inputs.futures_price * 0.8;
+            const maxPrice = parseFloat(maxPriceEl.value) || inputs.futures_price * 1.2;
+            const halfRange = Math.max(
+                inputs.futures_price - minPrice,
+                maxPrice - inputs.futures_price
+            );
+            priceRangePct = Math.max(5, Math.round((halfRange / inputs.futures_price) * 100));
+        }
+
+        if (minVolEl && maxVolEl) {
+            const minV = parseFloat(minVolEl.value) || inputs.volatility * 0.5;
+            const maxV = parseFloat(maxVolEl.value) || inputs.volatility * 1.5;
+            const halfRangeV = Math.max(
+                inputs.volatility - minV,
+                maxV - inputs.volatility
+            );
+            volRangePct = Math.max(10, Math.round((halfRangeV / inputs.volatility) * 100));
+        }
+
+        return {
+            futures_price: inputs.futures_price,
+            strike_price: inputs.strike_price,
+            days_to_expiry: inputs.days_to_expiry,
+            volatility: inputs.volatility,
+            risk_free_rate: inputs.risk_free_rate,
+            price_range_pct: priceRangePct,
+            vol_range_pct: volRangePct,
+            grid_size: 12
+        };
+    },
+
+    /**
+     * Initialize market filter chips UI
+     */
+    initMarketFiltersUI() {
+        // All available options
+        this.allContracts = ['N25I','25MN','10MN','SCOM','EQTY','KCB','SBIC','ABSA','COOP','NCBA'];
+        this.allTypes = ['Index','Single Stock'];
+        
+        // Currently selected filters
+        this.marketFilters = {
+            contracts: ['N25I','25MN','10MN','SCOM','EQTY'],
+            types: ['Index','Single Stock']
+        };
+
+        const contractChips = document.getElementById('contract-chips');
+        const typeChips = document.getElementById('type-chips');
+        const clearBtn = document.getElementById('clear-contracts');
+
+        const self = this;
+
+        const renderChips = (container, items, key) => {
+            if (!container) return;
+            container.innerHTML = items.map(item => `
+                <span class="chip chip-active" data-key="${key}" data-value="${item}">
+                    ${item}
+                    <button aria-label="remove">×</button>
+                </span>
+            `).join('');
+            container.querySelectorAll('.chip button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const chip = e.target.closest('.chip');
+                    const value = chip.dataset.value;
+                    const k = chip.dataset.key;
+                    self.marketFilters[k] = self.marketFilters[k].filter(v => v !== value);
+                    renderChips(container, self.marketFilters[k], k);
+                    self.updateDropdown(k);
+                    self.loadMarketData();
+                });
+            });
+        };
+
+        renderChips(contractChips, this.marketFilters.contracts, 'contracts');
+        renderChips(typeChips, this.marketFilters.types, 'types');
+
+        // Setup dropdown for contracts
+        const addContractBtn = document.getElementById('add-contract-btn');
+        const contractDropdown = document.getElementById('contract-dropdown');
+        if (addContractBtn && contractDropdown) {
+            addContractBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                contractDropdown.classList.toggle('hidden');
+                // Close type dropdown
+                document.getElementById('type-dropdown')?.classList.add('hidden');
+            });
+            this.updateDropdown('contracts');
+        }
+
+        // Setup dropdown for types
+        const addTypeBtn = document.getElementById('add-type-btn');
+        const typeDropdown = document.getElementById('type-dropdown');
+        if (addTypeBtn && typeDropdown) {
+            addTypeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                typeDropdown.classList.toggle('hidden');
+                // Close contract dropdown
+                document.getElementById('contract-dropdown')?.classList.add('hidden');
+            });
+            this.updateDropdown('types');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            contractDropdown?.classList.add('hidden');
+            typeDropdown?.classList.add('hidden');
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.marketFilters.contracts = [];
+                renderChips(contractChips, this.marketFilters.contracts, 'contracts');
+                this.updateDropdown('contracts');
+                this.loadMarketData();
+            });
+        }
+
+        // Store renderChips for reuse
+        this.renderChips = renderChips;
+    },
+
+    /**
+     * Update dropdown options based on what's already selected
+     */
+    updateDropdown(key) {
+        const allItems = key === 'contracts' ? this.allContracts : this.allTypes;
+        const selected = this.marketFilters[key];
+        const available = allItems.filter(item => !selected.includes(item));
+        
+        const dropdownId = key === 'contracts' ? 'contract-dropdown' : 'type-dropdown';
+        const dropdown = document.getElementById(dropdownId);
+        const chipsContainer = document.getElementById(key === 'contracts' ? 'contract-chips' : 'type-chips');
+        
+        if (!dropdown) return;
+
+        if (available.length === 0) {
+            dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-gray-400">All items selected</div>';
+        } else {
+            dropdown.innerHTML = available.map(item => `
+                <button type="button" data-value="${item}">${item}</button>
+            `).join('');
+            
+            dropdown.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = btn.dataset.value;
+                    this.marketFilters[key].push(value);
+                    this.renderChips(chipsContainer, this.marketFilters[key], key);
+                    this.updateDropdown(key);
+                    dropdown.classList.add('hidden');
+                    this.loadMarketData();
+                });
+            });
+        }
+    },
+
+    /**
+     * Initialize heatmap params defaults and display
+     */
+    initHeatmapParamsUI() {
+        const minVol = document.getElementById('min-vol');
+        const maxVol = document.getElementById('max-vol');
+        if (minVol) document.getElementById('min-vol-display').textContent = parseFloat(minVol.value).toFixed(2);
+        if (maxVol) document.getElementById('max-vol-display').textContent = parseFloat(maxVol.value).toFixed(2);
+    },
+
+    /**
      * Load market data
      */
     async loadMarketData() {
         try {
-            const response = await API.market.getFutures();
+            const filters = {};
+            if (this.marketFilters?.contracts?.length) {
+                filters.contracts = this.marketFilters.contracts.join(',');
+            }
+            if (this.marketFilters?.types?.length) {
+                filters.types = this.marketFilters.types.join(',');
+            }
+            const response = await API.market.getFutures(filters);
 
             if (response.success && response.data) {
                 this.renderMarketData(response.data);
@@ -228,12 +473,14 @@ const Calculator = {
                     </tbody>
                 </table>
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-4">
-                Showing ${data.total} contract(s)
-            </p>
         `;
 
         container.innerHTML = tableHTML;
+
+        const marketCount = document.getElementById('market-count');
+        if (marketCount) {
+            marketCount.textContent = `Showing ${data.total} futures contracts`;
+        }
     },
 
     /**

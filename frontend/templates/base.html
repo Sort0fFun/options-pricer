@@ -38,7 +38,7 @@
     <!-- Navigation -->
     <nav class="bg-gradient-to-r from-nse-dark to-nse-primary shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+            <div class="flex justify-between h-16 items-center">
                 <div class="flex">
                     <!-- Logo -->
                     <div class="flex-shrink-0 flex items-center">
@@ -46,72 +46,85 @@
                     </div>
 
                     <!-- Navigation Links -->
-                    <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
-                        <a href="/" class="nav-link {% if request.path == '/' %}nav-link-active{% endif %}">
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-2 items-center">
+                        <a href="/" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all {% if request.path == '/' %}bg-white/25{% endif %}">
                             Option Calculator
                         </a>
-                        <a href="/pnl" class="nav-link {% if request.path == '/pnl' %}nav-link-active{% endif %}">
-                            PnL Predictor
+                        <a href="/volatility" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all {% if request.path == '/volatility' %}bg-white/25{% endif %}">
+                            Volatility Forecasting
                         </a>
-                        <a href="/chatbot" class="nav-link {% if request.path == '/chatbot' %}nav-link-active{% endif %}">
+                        <a href="/chatbot" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all {% if request.path == '/chatbot' %}bg-white/25{% endif %}">
                             Flavia AI
                         </a>
-                        <a href="/settings" class="nav-link {% if request.path == '/settings' %}nav-link-active{% endif %}">
+                        <a href="/settings" class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all {% if request.path == '/settings' %}bg-white/25{% endif %}">
                             Settings
                         </a>
                     </div>
                 </div>
 
                 <!-- Right side items -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
                     <!-- Market Status -->
-                    <div id="market-status" class="hidden sm:block">
-                        <span class="px-3 py-1 rounded-full text-sm font-medium">
+                    <div id="market-status" class="hidden sm:flex items-center">
+                        <span id="market-status-badge" class="px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-200">
                             <span id="market-status-text">Loading...</span>
                         </span>
                     </div>
 
-                    <!-- Auth Links (shown when logged out) -->
-                    <div id="auth-links-guest" class="hidden sm:flex items-center space-x-2">
-                        <a href="/login" class="px-3 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
+                    <!-- Auth Links (shown when logged out) - hidden by default until JS checks auth state -->
+                    <div id="auth-links-guest" class="hidden sm:hidden items-center space-x-1">
+                        <a href="/login" class="px-3 py-1.5 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm font-medium">
                             Sign In
                         </a>
-                        <a href="/register" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors text-sm font-medium">
+                        <a href="/register" class="px-4 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors text-sm font-medium border border-white/30">
                             Register
                         </a>
                     </div>
 
                     <!-- User Menu (shown when logged in) -->
-                    <div id="auth-links-user" class="hidden sm:flex items-center space-x-2">
-                        <a href="/profile" class="flex items-center space-x-2 px-3 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors">
-                            <div id="nav-avatar" class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-xs font-medium">
+                    <div id="auth-links-user" class="hidden sm:hidden items-center space-x-1">
+                        <a href="/wallet" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors" title="Wallet">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                            </svg>
+                            <span id="nav-tokens" class="text-xs font-semibold bg-nse-light/30 text-white px-1.5 py-0.5 rounded">0</span>
+                        </a>
+                        <a href="/profile" class="flex items-center space-x-2 px-2.5 py-1.5 text-white hover:bg-white/10 rounded-lg transition-colors">
+                            <div id="nav-avatar" class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">
                                 <span id="nav-initials">U</span>
                             </div>
                             <span id="nav-username" class="text-sm font-medium hidden lg:inline">User</span>
                         </a>
-                        <button id="nav-logout-btn" class="p-2 text-white hover:bg-white/10 rounded-lg transition-colors" title="Sign Out">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button id="nav-logout-btn" class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Sign Out">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                             </svg>
                         </button>
                     </div>
 
                     <!-- Theme Toggle -->
-                    <button id="theme-toggle" class="p-2 rounded-lg text-white hover:bg-white/10 transition-colors" aria-label="Toggle theme">
-                        <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="theme-toggle" class="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors" aria-label="Toggle theme">
+                        <svg id="theme-icon-dark" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                         </svg>
-                        <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="theme-icon-light" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-btn" class="sm:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile menu -->
-        <div class="sm:hidden" id="mobile-menu">
-            <div class="pt-2 pb-3 space-y-1">
+        <!-- Mobile menu (hidden by default) -->
+        <div class="sm:hidden hidden" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1 px-2">
                 <a href="/" class="mobile-nav-link {% if request.path == '/' %}mobile-nav-link-active{% endif %}">
                     Option Calculator
                 </a>
@@ -124,12 +137,15 @@
                 <a href="/settings" class="mobile-nav-link {% if request.path == '/settings' %}mobile-nav-link-active{% endif %}">
                     Settings
                 </a>
-                <!-- Mobile Auth Links -->
-                <div id="mobile-auth-guest" class="border-t border-white/10 mt-2 pt-2">
+                <!-- Mobile Auth Links (hidden until JS checks) -->
+                <div id="mobile-auth-guest" class="hidden border-t border-white/10 mt-2 pt-2">
                     <a href="/login" class="mobile-nav-link">Sign In</a>
                     <a href="/register" class="mobile-nav-link">Register</a>
                 </div>
                 <div id="mobile-auth-user" class="hidden border-t border-white/10 mt-2 pt-2">
+                    <a href="/wallet" class="mobile-nav-link {% if request.path == '/wallet' %}mobile-nav-link-active{% endif %}">
+                        Wallet & Tokens
+                    </a>
                     <a href="/profile" class="mobile-nav-link {% if request.path == '/profile' %}mobile-nav-link-active{% endif %}">
                         My Profile
                     </a>

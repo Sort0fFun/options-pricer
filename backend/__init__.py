@@ -33,6 +33,12 @@ def create_app(config_name='default'):
     bcrypt.init_app(app)
     AuthService.init_app(mongo)
 
+    # Initialize wallet and M-Pesa services
+    from backend.services.wallet_service import WalletService
+    from backend.services.mpesa_service import MpesaService
+    WalletService.init_app(mongo)
+    MpesaService.init_app(app)
+
     # Register blueprints
     from backend.api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')

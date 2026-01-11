@@ -60,9 +60,6 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
-*.ipynb
 
 CLAUDE.md
 pnl_analysis.py

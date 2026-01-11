@@ -4,9 +4,9 @@
 
 {% block content %}
 <!-- Main Header -->
-<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-8 rounded-lg text-white shadow-lg mb-6">
-    <h2 class="text-3xl font-bold m-0">Welcome to NSE Options Calculator</h2>
-    <p class="mt-2 opacity-90">Powered by Black-76 Model • Real-time Analytics</p>
+<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-8 rounded-2xl text-white shadow-xl mb-8">
+    <h2 class="text-4xl font-bold m-0">Welcome to NSE Options Calculator</h2>
+    <p class="mt-3 text-white/80 text-lg">Powered by Black-76 Model • Machine Learning • Real-time Analytics</p>
 </div>
 
 <!-- Main Layout -->
@@ -44,15 +44,26 @@
 
             <!-- Volatility Slider -->
             <div>
-                <label class="input-label" for="volatility">Volatility</label>
-                <input type="range" id="volatility" class="w-full" min="10" max="100" value="30">
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Current: <span id="volatility-display">30</span>%</p>
+                <label class="input-label" for="volatility">
+                    Volatility (%)
+                    <span class="help-tooltip ml-1" data-tip="Implied volatility as a percentage. Higher volatility increases option prices.">?</span>
+                </label>
+                <input type="range" id="volatility" class="w-full accent-nse-primary" min="10" max="100" value="30">
+                <p class="text-sm text-green-600 dark:text-green-400 mt-1"><span id="volatility-display">30</span></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Current: <span id="volatility-pct">30</span>%</p>
             </div>
 
             <!-- Risk-Free Rate -->
             <div>
-                <label class="input-label" for="risk_free_rate">Risk-Free Rate (%)</label>
-                <input type="number" id="risk_free_rate" class="input-field" value="12.0" step="0.1" min="0" max="100">
+                <label class="input-label" for="risk_free_rate">
+                    Risk-Free Rate (%)
+                    <span class="help-tooltip ml-1" data-tip="The theoretical rate of return on a risk-free investment, typically Kenya's 91-day T-bill rate.">?</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn-secondary px-2 py-1" id="rate-dec">-</button>
+                    <input type="number" id="risk_free_rate" class="input-field" value="12.0" step="0.1" min="0" max="100">
+                    <button type="button" class="btn-secondary px-2 py-1" id="rate-inc">+</button>
+                </div>
             </div>
 
             <!-- Option Type -->
@@ -78,6 +89,7 @@
                 <label class="flex items-center">
                     <input type="checkbox" id="include_fees" class="mr-2">
                     <span class="text-sm text-gray-700 dark:text-gray-300">Include NSE Market Fees</span>
+                    <span class="help-tooltip ml-1" data-tip="Add NSE trading fees (0.085%) to the calculated option price">?</span>
                 </label>
             </div>
 
@@ -118,66 +130,152 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Pricing Summary -->
-        <div id="pricing-summary" class="card">
-            <h3 class="card-header">Black-76 Pricing Model Summary</h3>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="pricing-metrics">
-                <div class="metric-card">
-                    <div class="metric-label">Current Asset Price</div>
-                    <div class="metric-value">KES <span id="metric-price">100.00</span></div>
+        <div id="pricing-summary" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Black-76 Pricing Model</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-6" id="pricing-metrics">
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Asset Price</div>
+                    <div class="text-2xl font-bold text-nse-primary"><span id="metric-price">100.0000</span></div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Strike Price</div>
-                    <div class="metric-value">KES <span id="metric-strike">100.00</span></div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Strike Price</div>
+                    <div class="text-2xl font-bold text-nse-primary"><span id="metric-strike">100.0000</span></div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Time to Maturity</div>
-                    <div class="metric-value"><span id="metric-time">0.0822</span> yrs</div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Time to Maturity (Years)</div>
+                    <div class="text-2xl font-bold text-nse-primary"><span id="metric-time">0.0822</span></div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Volatility</div>
-                    <div class="metric-value"><span id="metric-volatility">30</span>%</div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Volatility (σ)</div>
+                    <div class="text-2xl font-bold text-nse-primary"><span id="metric-volatility">0.3000</span></div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Risk-Free Rate</div>
-                    <div class="metric-value"><span id="metric-rate">12.0</span>%</div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Risk-Free Interest Rate</div>
+                    <div class="text-2xl font-bold text-nse-primary"><span id="metric-rate">0.1200</span></div>
+                </div>
+            </div>
+
+            <!-- Call/Put Value Boxes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-teal-700 to-teal-600 rounded-2xl p-8 text-center shadow-lg">
+                    <div class="text-teal-100 text-sm mb-2">CALL Value</div>
+                    <div class="text-white text-4xl font-bold">KES <span id="call-value">3.40</span></div>
+                </div>
+                <div class="bg-gradient-to-br from-rose-800 to-rose-700 rounded-2xl p-8 text-center shadow-lg">
+                    <div class="text-rose-100 text-sm mb-2">PUT Value</div>
+                    <div class="text-white text-4xl font-bold">KES <span id="put-value">3.40</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- Call/Put Value Boxes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="value-box-call">
-                <div class="value-box-label">Call Option Value</div>
-                <div class="value-box-value">KES <span id="call-value">0.00</span></div>
+        <!-- Interactive Heatmap -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Options Price - Interactive Heatmap</h3>
+                <button id="toggle-heatmap-params" class="text-sm px-4 py-2 rounded-lg bg-nse-primary/10 text-nse-primary hover:bg-nse-primary/20 transition-colors flex items-center gap-2">
+                    <span>Heatmap Parameters</span>
+                    <span id="heatmap-params-arrow">▾</span>
+                </button>
             </div>
-            <div class="value-box-put">
-                <div class="value-box-label">Put Option Value</div>
-                <div class="value-box-value">KES <span id="put-value">0.00</span></div>
-            </div>
-        </div>
 
-        <!-- Heatmaps -->
-        <div class="card">
-            <h3 class="card-header">Option Price Heatmaps</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Info Banner -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 border border-blue-100 dark:border-blue-800">
+                <p class="text-blue-700 dark:text-blue-300 text-sm">Explore how option prices fluctuate with varying input parameters.</p>
+            </div>
+
+            <!-- Heatmap Parameters (collapsible) -->
+            <div id="heatmap-params" class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
+                <details open>
+                    <summary class="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        Heatmap Parameters
+                    </summary>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Min Futures Price</label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-lg" id="min-price-dec">-</button>
+                                <input type="number" id="min-futures-price" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-center font-semibold" value="80.00" step="0.5">
+                                <button type="button" class="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-lg" id="min-price-inc">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Min Volatility for Heatmap: (<span id="min-vol-display" class="text-nse-primary">0.15</span>)</label>
+                            <input type="range" id="min-vol" min="0.05" max="0.60" step="0.01" value="0.15" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-nse-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Max Futures Price</label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-lg" id="max-price-dec">-</button>
+                                <input type="number" id="max-futures-price" class="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-center font-semibold" value="120.00" step="0.5">
+                                <button type="button" class="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-lg" id="max-price-inc">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Max Volatility for Heatmap: (<span id="max-vol-display" class="text-nse-primary">0.45</span>)</label>
+                            <input type="range" id="max-vol" min="0.10" max="0.80" step="0.01" value="0.45" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-nse-primary">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Call Price Heatmap</h4>
-                    <div id="call-heatmap" class="w-full h-96"></div>
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Call Price Heatmap</h4>
+                    <div id="call-heatmap" class="w-full h-96 bg-gray-50 dark:bg-gray-900 rounded-xl"></div>
                 </div>
                 <div>
-                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Put Price Heatmap</h4>
-                    <div id="put-heatmap" class="w-full h-96"></div>
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Put Price Heatmap</h4>
+                    <div id="put-heatmap" class="w-full h-96 bg-gray-50 dark:bg-gray-900 rounded-xl"></div>
                 </div>
             </div>
         </div>
 
         <!-- NSE Futures Market Overview -->
-        <div class="card">
-            <h3 class="card-header">NSE Futures Market Overview</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">NSE Futures Market Overview</h3>
+            </div>
+            
+            <!-- Filters -->
+            <div class="space-y-3 mb-6">
+                <div class="flex flex-wrap gap-3 items-center">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[120px]">Filter by Contract</span>
+                    <div id="contract-chips" class="flex flex-wrap gap-2">
+                        <!-- chips injected by JS -->
+                    </div>
+                    <div class="relative">
+                        <button id="add-contract-btn" class="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">+ Add</button>
+                        <div id="contract-dropdown" class="dropdown-menu hidden">
+                            <!-- options injected by JS -->
+                        </div>
+                    </div>
+                    <button id="clear-contracts" class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 hover:bg-red-100 hover:text-red-500 transition-colors text-xs" title="Clear all">×</button>
+                </div>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[120px]">Filter by Type</span>
+                    <div id="type-chips" class="flex flex-wrap gap-2"></div>
+                    <div class="relative">
+                        <button id="add-type-btn" class="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">+ Add</button>
+                        <div id="type-dropdown" class="dropdown-menu hidden">
+                            <!-- options injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="market-data-container">
-                <div class="flex justify-center items-center py-8">
+                <div class="flex justify-center items-center py-12">
                     <div class="spinner"></div>
                 </div>
+            </div>
+
+            <!-- Data Source Footer -->
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-4 py-3">
+                    <p class="text-sm"><span class="font-semibold text-red-600">Data Source:</span> <a href="#" class="text-blue-600 hover:underline">NSE Derivatives Price List 2025</a></p>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right" id="market-count"></p>
             </div>
         </div>
     </div>

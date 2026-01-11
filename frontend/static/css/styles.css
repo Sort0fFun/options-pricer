@@ -2,11 +2,11 @@
 
 /* Navigation Links */
 .nav-link {
-    @apply inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-white/70 hover:text-white hover:border-white/30 transition-all;
+    @apply inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-all;
 }
 
 .nav-link-active {
-    @apply border-white text-white;
+    @apply bg-white/25 text-white;
 }
 
 .mobile-nav-link {
@@ -187,7 +187,7 @@
 
 /* Responsive Sidebar */
 .sidebar {
-    @apply w-full lg:w-80 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700;
+    @apply w-full lg:w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700 h-fit;
 }
 
 /* Main Content Area */
@@ -202,4 +202,46 @@
 
 .tooltip-visible {
     @apply opacity-100 visible;
+}
+
+/* Filter Chips */
+.chip {
+    @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-nse-primary text-white;
+}
+.chip-active {
+    @apply bg-nse-primary text-white;
+}
+.chip button {
+    @apply ml-2 text-white/70 hover:text-white text-xs;
+}
+
+/* Collapsible Controls */
+.collapsible-hidden {
+    display: none;
+}
+
+/* Help Tooltips */
+.help-tooltip {
+    @apply inline-flex items-center justify-center w-4 h-4 text-xs rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-help;
+}
+.help-tooltip:hover::after {
+    content: attr(data-tip);
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 dark:bg-gray-700 rounded shadow-lg whitespace-nowrap;
+    transform: translateY(-100%) translateX(-50%);
+    left: 50%;
+    top: -4px;
+}
+.help-tooltip {
+    position: relative;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    @apply absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 min-w-[120px] max-h-48 overflow-y-auto;
+}
+.dropdown-menu button {
+    @apply block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+.dropdown-menu.hidden {
+    display: none;
 }

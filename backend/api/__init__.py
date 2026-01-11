@@ -17,7 +17,7 @@ api = Api(
 )
 
 # Import and add namespaces
-from backend.api import pricing, market, chatbot, pnl, auth
+from backend.api import pricing, market, chatbot, pnl, auth, wallet
 
 # Add namespaces to API
 api.add_namespace(pricing.ns, path='/pricing')
@@ -25,3 +25,4 @@ api.add_namespace(market.ns, path='/market')
 api.add_namespace(chatbot.ns, path='/chat')
 api.add_namespace(pnl.ns, path='/pnl')
 api.add_namespace(auth.ns, path='/auth')
+api.add_namespace(wallet.wallet_ns, path='/wallet')
