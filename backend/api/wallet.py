@@ -12,7 +12,7 @@ from backend.models.wallet_models import (
     TOKEN_PRICING,
     calculate_custom_token_price
 )
-from backend.services.wallet_service import WalletService
+from backend.services.wallet_service import WalletService, serialize_datetime
 from backend.services.mpesa_service import MpesaService
 
 
@@ -253,7 +253,7 @@ class SimulateMpesaCallback(Resource):
         if transaction['status'] != 'pending':
             return {
                 'message': f"Transaction already {transaction['status']}",
-                'transaction': transaction
+                'transaction': serialize_datetime(transaction)
             }, 200
         
         # Simulate successful payment
@@ -271,9 +271,9 @@ class SimulateMpesaCallback(Resource):
         
         return {
             'message': 'Payment simulated successfully',
-            'transaction': result,
+            'transaction': serialize_datetime(result),
             'wallet': WalletService.get_wallet(transaction['user_id'])
-        }, 200, 200
+        }, 200
 
 
 @wallet_ns.route('/tokens')
@@ -329,7 +329,7 @@ class ChatTokens(Resource):
             
             return {
                 'message': f'Successfully purchased {purchase.tokens} tokens',
-                'transaction': transaction,
+                'transaction': serialize_datetime(transaction),
                 'wallet': wallet
             }, 200
             

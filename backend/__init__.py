@@ -2,14 +2,26 @@
 Flask application factory.
 """
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from flask_pymongo import PyMongo
 from flask_jwt_extended import JWTManager
 from config import config
+from datetime import datetime
 
 # Initialize extensions
 mongo = PyMongo()
 jwt = JWTManager()
+
+
+class CustomJSONProvider(DefaultJSONProvider):
+    """Custom JSON provider that handles datetime serialization."""
+    
+    def default(self, obj):
+        """Convert datetime objects to ISO format strings."""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 def create_app(config_name='default'):
@@ -22,6 +34,9 @@ def create_app(config_name='default'):
 
     # Load configuration
     app.config.from_object(config[config_name])
+    
+    # Set custom JSON provider for datetime serialization
+    app.json = CustomJSONProvider(app)
 
     # Initialize extensions
     CORS(app)
