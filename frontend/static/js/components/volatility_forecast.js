@@ -6,6 +6,7 @@ const VolatilityForecast = {
     currentSymbol: null,
     modelInfo: null,
     selectedFile: null,
+    lastPrediction: null,
 
     /**
      * Initialize volatility forecast component
@@ -120,6 +121,12 @@ const VolatilityForecast = {
 
         // File upload handlers
         this.setupFileUpload();
+
+        // Use in calculator button
+        const useInCalcBtn = document.getElementById('use-in-calculator-btn');
+        if (useInCalcBtn) {
+            useInCalcBtn.addEventListener('click', () => this.openCalculator());
+        }
     },
 
     /**
@@ -306,6 +313,30 @@ const VolatilityForecast = {
     },
 
     /**
+     * Navigate to calculator with predicted volatility pre-filled
+     */
+    openCalculator() {
+        if (!this.currentSymbol || !this.lastPrediction) {
+            App.showError('alert-area', 'No prediction available to use');
+            return;
+        }
+
+        // Store prediction data for calculator to pick up
+        const calcData = {
+            volatility: this.lastPrediction.predicted_volatility,
+            symbol: this.currentSymbol,
+            source: 'ml_forecast',
+            confidence: this.lastPrediction.model_confidence,
+            timestamp: this.lastPrediction.prediction_timestamp
+        };
+
+        localStorage.setItem('nse_calculator_prefill', JSON.stringify(calcData));
+
+        // Navigate to calculator
+        window.location.href = '/';
+    },
+
+    /**
      * Update model information display
      */
     updateModelInfo() {
@@ -380,13 +411,76 @@ const VolatilityForecast = {
      */
     async fetchForecast(symbol, horizon) {
         try {
+            // Show chart section and loading state
+            const chartSection = document.getElementById('forecast-chart-section');
+            const chartLoading = document.getElementById('forecast-chart-loading');
+            const chartContainer = document.getElementById('forecast-chart');
+            const chartError = document.getElementById('forecast-chart-error');
+
+            if (chartSection) chartSection.classList.remove('hidden');
+            if (chartLoading) chartLoading.classList.remove('hidden');
+            if (chartContainer) chartContainer.classList.add('hidden');
+            if (chartError) chartError.classList.add('hidden');
+
             const response = await API.volatility.getForecast(symbol, horizon);
+
             if (response.success && response.data) {
-                Charts.renderVolatilityForecast('forecast-chart', response.data);
+                // Format data for chart
+                const chartData = this.formatForecastData(response.data);
+
+                // Hide loading, show chart
+                if (chartLoading) chartLoading.classList.add('hidden');
+                if (chartContainer) chartContainer.classList.remove('hidden');
+
+                // Render chart
+                Charts.renderVolatilityForecast('forecast-chart', chartData);
+            } else {
+                throw new Error('Invalid forecast data');
             }
         } catch (error) {
             console.error('Forecast error:', error);
+
+            // Show error state
+            const chartLoading = document.getElementById('forecast-chart-loading');
+            const chartContainer = document.getElementById('forecast-chart');
+            const chartError = document.getElementById('forecast-chart-error');
+
+            if (chartLoading) chartLoading.classList.add('hidden');
+            if (chartContainer) chartContainer.classList.add('hidden');
+            if (chartError) chartError.classList.remove('hidden');
         }
+    },
+
+    /**
+     * Format forecast data for chart rendering
+     */
+    formatForecastData(data) {
+        // Extract data from API response
+        const historical = data.historical_volatility || {};
+        const current = data.current_prediction || {};
+
+        // Ensure confidence interval is properly ordered
+        let upper = null;
+        let lower = null;
+        if (current.confidence_interval && Array.isArray(current.confidence_interval)) {
+            const sorted = [...current.confidence_interval].sort((a, b) => a - b);
+            lower = sorted[0];
+            upper = sorted[1];
+        }
+
+        return {
+            // Historical volatility data
+            historical_dates: historical.timestamps || [],
+            historical_volatility: historical.values || [],
+
+            // Predicted volatility (single point or array)
+            forecast_dates: [current.prediction_timestamp],
+            predicted_volatility: [current.predicted_volatility],
+
+            // Confidence intervals
+            upper_bound: upper !== null ? [upper] : [],
+            lower_bound: lower !== null ? [lower] : []
+        };
     },
 
     /**
@@ -395,6 +489,15 @@ const VolatilityForecast = {
     displayPrediction(data) {
         const predictionSection = document.getElementById('prediction-section');
         predictionSection?.classList.remove('hidden');
+
+        // Store last prediction for calculator integration
+        this.lastPrediction = data;
+
+        // Update "Use in Calculator" button info
+        const volValue = document.getElementById('use-calc-vol-value');
+        const symbolEl = document.getElementById('use-calc-symbol');
+        if (volValue) volValue.textContent = `${(data.predicted_volatility * 100).toFixed(2)}%`;
+        if (symbolEl) symbolEl.textContent = this.currentSymbol || data.symbol;
 
         // Update metrics
         const predictedVol = document.getElementById('predicted-vol');
@@ -409,8 +512,10 @@ const VolatilityForecast = {
         if (predictedVolPct) predictedVolPct.textContent = `${(data.predicted_volatility * 100).toFixed(4)}%`;
         
         if (confidenceInterval && data.confidence_interval && Array.isArray(data.confidence_interval)) {
-            const lower = (data.confidence_interval[0] * 100).toFixed(4);
-            const upper = (data.confidence_interval[1] * 100).toFixed(4);
+            // Ensure lower is always less than upper
+            const values = [data.confidence_interval[0], data.confidence_interval[1]].sort((a, b) => a - b);
+            const lower = (values[0] * 100).toFixed(4);
+            const upper = (values[1] * 100).toFixed(4);
             confidenceInterval.textContent = `${lower}% - ${upper}%`;
         }
 
@@ -500,6 +605,10 @@ const VolatilityForecast = {
     displayBacktest(data) {
         const backtestSection = document.getElementById('backtest-section');
         backtestSection?.classList.remove('hidden');
+
+        // Hide prediction and chart sections
+        document.getElementById('prediction-section')?.classList.add('hidden');
+        document.getElementById('forecast-chart-section')?.classList.add('hidden');
 
         // Update metrics
         const accuracy = document.getElementById('backtest-accuracy');

@@ -29,6 +29,9 @@ const Calculator = {
 
         // Load market data
         await this.loadMarketData();
+
+        // Check for ML volatility prefill
+        this.checkPrefillData();
     },
 
     /**
@@ -639,6 +642,72 @@ const Calculator = {
                 useMLBtn.classList.remove('bg-green-600');
             }, 2000);
         }
+    },
+
+    /**
+     * Check for ML volatility prefill from volatility forecast page
+     */
+    checkPrefillData() {
+        const prefillData = localStorage.getItem('nse_calculator_prefill');
+        if (!prefillData) return;
+
+        try {
+            const data = JSON.parse(prefillData);
+
+            // Clear the stored data
+            localStorage.removeItem('nse_calculator_prefill');
+
+            // Prefill volatility input
+            const volInput = document.getElementById('volatility');
+            if (volInput && data.volatility) {
+                volInput.value = (data.volatility * 100).toFixed(2);
+
+                // Trigger input event to update calculations
+                volInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            // Show notification badge
+            this.showMLVolatilityBadge(data);
+
+        } catch (error) {
+            console.error('Error loading prefill data:', error);
+        }
+    },
+
+    /**
+     * Show badge indicating ML-predicted volatility is being used
+     */
+    showMLVolatilityBadge(data) {
+        const volInput = document.getElementById('volatility');
+        if (!volInput) return;
+
+        // Create badge element
+        const badge = document.createElement('div');
+        badge.id = 'ml-vol-badge';
+        badge.className = 'absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse';
+        badge.innerHTML = `
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+            </svg>
+            <span>ML Predicted</span>
+        `;
+
+        // Position badge relative to input container
+        const inputContainer = volInput.parentElement;
+        if (inputContainer) {
+            inputContainer.style.position = 'relative';
+            inputContainer.appendChild(badge);
+
+            // Remove badge after 5 seconds
+            setTimeout(() => {
+                badge.classList.remove('animate-pulse');
+                setTimeout(() => badge.remove(), 1000);
+            }, 5000);
+        }
+
+        // Show info message
+        const message = `Using ML-predicted volatility: ${(data.volatility * 100).toFixed(2)}% (${(data.confidence * 100).toFixed(0)}% confidence)`;
+        App.showSuccess('alert-area', message);
     }
 };
 
