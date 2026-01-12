@@ -51,3 +51,9 @@ def init_app(app):
     def volatility_forecast():
         """Volatility forecasting page."""
         return render_template('volatility_forecast.html')
+
+    @app.route('/nse')
+    @app.route('/nse/forecast')
+    def nse_forecast():
+        """NSE Derivatives forecasting page."""
+        return render_template('nse_forecast.html')

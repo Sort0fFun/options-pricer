@@ -23,7 +23,7 @@ def health_check():
     return {'status': 'healthy', 'service': 'options-pricer-api'}, 200
 
 # Import and add namespaces
-from backend.api import pricing, market, chatbot, pnl, auth, wallet, volatility
+from backend.api import pricing, market, chatbot, pnl, auth, wallet, volatility, nse
 
 # Add namespaces to API
 api.add_namespace(pricing.ns, path='/pricing')
@@ -35,4 +35,7 @@ api.add_namespace(wallet.wallet_ns, path='/wallet')
 
 # Register volatility blueprint (uses plain Flask Blueprint, not Flask-RESTX)
 api_bp.register_blueprint(volatility.volatility_bp, url_prefix='/volatility')
+
+# Register NSE derivatives blueprint
+api_bp.register_blueprint(nse.nse_bp, url_prefix='/nse')
 

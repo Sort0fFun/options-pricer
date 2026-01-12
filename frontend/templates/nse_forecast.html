@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block title %}NSE Derivatives Forecaster - NSE Options Pricer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .price-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (min-width: 768px) { .price-grid { grid-template-columns: repeat(3, 1fr); } }
+    
+    .price-item {
+        padding: 12px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .price-label { font-size: 12px; color: #9CA3AF; margin-bottom: 4px; }
+    .price-value { font-size: 18px; font-weight: 600; }
+    
+    .positive { color: #4ADE80; }
+    .negative { color: #F87171; }
+    
+    .forecast-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .forecast-table th, .forecast-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .forecast-table th {
+        background: rgba(255,255,255,0.05);
+        font-weight: 600;
+        color: #9CA3AF;
+    }
+    .forecast-table tr:hover { background: rgba(255,255,255,0.02); }
+    
+    .model-info {
+        background: rgba(255,255,255,0.05);
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-top: 16px;
+    }
+    .model-info code {
+        background: rgba(255,255,255,0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .badge-stock { background: rgba(74, 222, 128, 0.2); color: #4ADE80; }
+    .badge-index { background: rgba(251, 191, 36, 0.2); color: #FCD34D; }
+    
+    .loading-spinner {
+        border: 3px solid rgba(255,255,255,0.1);
+        border-top: 3px solid #4ADE80;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+            <span>🇰🇪</span>
+            NSE Derivatives Volatility Forecaster
+        </h1>
+        <p class="text-gray-400 mt-2">
+            Forecast volatility and prices for NSE (Nairobi Securities Exchange) derivatives using GARCH and ARIMA models.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Column - Input Form -->
+        <div class="space-y-6">
+            <!-- Symbol Selection Card -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4">Select Contract</h2>
+                
+                <!-- Contract Type Filter -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Contract Type</label>
+                    <select id="symbolType" onchange="filterSymbols()" 
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-nse-secondary focus:border-transparent">
+                        <option value="all">All Contracts</option>
+                        <option value="STOCK">Single Stock Futures</option>
+                        <option value="INDEX">Index Futures</option>
+                    </select>
+                </div>
+                
+                <!-- Symbol Dropdown -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Select Symbol</label>
+                    <select id="symbolSelect" onchange="loadSymbolPrice()"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-nse-secondary focus:border-transparent">
+                        <option value="">-- Select Symbol --</option>
+                    </select>
+                </div>
+                
+                <!-- Price Info Display -->
+                <div id="priceInfo" class="hidden mb-4 bg-gradient-to-r from-nse-dark to-gray-800 rounded-lg p-4 border border-nse-secondary/30">
+                </div>
+            </div>
+
+            <!-- Forecast Parameters Card -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4">Forecast Parameters</h2>
+                
+                <!-- Horizon -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Forecast Horizon (periods)</label>
+                    <input type="number" id="horizon" value="5" min="1" max="30"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-nse-secondary focus:border-transparent">
+                </div>
+                
+                <!-- Model Type -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Forecast Model</label>
+                    <select id="modelType"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-nse-secondary focus:border-transparent">
+                        <option value="combined">Combined (GARCH + ARIMA)</option>
+                        <option value="garch">GARCH (Volatility Only)</option>
+                        <option value="arima">ARIMA (Price Only)</option>
+                    </select>
+                </div>
+                
+                <!-- GARCH Type -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">GARCH Model Type</label>
+                    <select id="garchType"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-nse-secondary focus:border-transparent">
+                        <option value="GARCH">Standard GARCH</option>
+                        <option value="EGARCH">EGARCH (Exponential)</option>
+                        <option value="TARCH">TARCH (Threshold)</option>
+                    </select>
+                </div>
+                
+                <!-- Generate Button -->
+                <button id="forecastBtn" onclick="generateForecast()"
+                        class="w-full bg-gradient-to-r from-nse-primary to-nse-secondary text-white font-semibold py-3 px-6 rounded-lg hover:from-nse-secondary hover:to-nse-primary transition-all duration-300 shadow-lg">
+                    Generate Forecast
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column - Expiries & Quick Info -->
+        <div class="space-y-6">
+            <!-- Available Expiries Card -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4">Available Expiries</h2>
+                <div id="expiriesInfo" class="text-gray-400">
+                    Select a symbol to view available expiry contracts.
+                </div>
+            </div>
+
+            <!-- Quick Stats Card -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4">Model Information</h2>
+                <div class="space-y-3 text-sm text-gray-300">
+                    <div class="flex justify-between">
+                        <span>GARCH Model:</span>
+                        <span class="text-nse-light">Volatility Clustering</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>ARIMA Model:</span>
+                        <span class="text-nse-light">Price Forecasting</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Trading Days/Year:</span>
+                        <span class="text-nse-light">252</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Confidence Level:</span>
+                        <span class="text-nse-light">95%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="mt-8 hidden">
+        <!-- Results will be injected here -->
+    </div>
+</div>
+
+<script>
+    let allSymbols = [];
+    
+    // Load symbols on page load
+    document.addEventListener('DOMContentLoaded', loadSymbols);
+    
+    async function loadSymbols() {
+        try {
+            const response = await fetch('/api/nse/symbols');
+            allSymbols = await response.json();
+            populateSymbolDropdown(allSymbols);
+        } catch (error) {
+            console.error('Error loading symbols:', error);
+            showError('Failed to load symbols');
+        }
+    }
+    
+    function populateSymbolDropdown(symbols) {
+        const select = document.getElementById('symbolSelect');
+        select.innerHTML = '<option value="">-- Select Symbol --</option>';
+        
+        symbols.forEach(sym => {
+            const option = document.createElement('option');
+            option.value = sym.value;
+            option.textContent = sym.label;
+            option.dataset.type = sym.type;
+            select.appendChild(option);
+        });
+    }
+    
+    function filterSymbols() {
+        const typeFilter = document.getElementById('symbolType').value;
+        
+        if (typeFilter === 'all') {
+            populateSymbolDropdown(allSymbols);
+        } else {
+            const filtered = allSymbols.filter(s => s.type === typeFilter);
+            populateSymbolDropdown(filtered);
+        }
+        
+        document.getElementById('priceInfo').classList.add('hidden');
+        document.getElementById('expiriesInfo').innerHTML = '<p class="text-gray-400">Select a symbol to view available expiry contracts.</p>';
+    }
+    
+    async function loadSymbolPrice() {
+        const symbol = document.getElementById('symbolSelect').value;
+        const priceDiv = document.getElementById('priceInfo');
+        const expiriesDiv = document.getElementById('expiriesInfo');
+        
+        if (!symbol) {
+            priceDiv.classList.add('hidden');
+            expiriesDiv.innerHTML = '<p class="text-gray-400">Select a symbol to view available expiry contracts.</p>';
+            return;
+        }
+        
+        try {
+            // Load price
+            const priceResponse = await fetch(`/api/nse/price/${symbol}`);
+            const priceData = await priceResponse.json();
+            
+            if (priceData.error) {
+                priceDiv.innerHTML = `<p class="text-red-400">${priceData.error}</p>`;
+            } else {
+                const returnClass = priceData.daily_return >= 0 ? 'positive' : 'negative';
+                const returnSign = priceData.daily_return >= 0 ? '+' : '';
+                const badge = priceData.type === 'STOCK' ? 
+                    '<span class="badge badge-stock">Stock</span>' : 
+                    '<span class="badge badge-index">Index</span>';
+                
+                priceDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-lg font-semibold text-white">${priceData.name} (${priceData.symbol})</h4>
+                        ${badge}
+                    </div>
+                    <div class="price-grid">
+                        <div class="price-item">
+                            <div class="price-label">MTM Price</div>
+                            <div class="price-value text-white">KES ${priceData.mtm_price?.toFixed(2) || 'N/A'}</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Previous Price</div>
+                            <div class="price-value text-white">KES ${priceData.previous_price?.toFixed(2) || 'N/A'}</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Daily Return</div>
+                            <div class="price-value ${returnClass}">${returnSign}${(priceData.daily_return * 100).toFixed(2)}%</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Days to Expiry</div>
+                            <div class="price-value text-white">${priceData.days_to_expiry || 'N/A'}</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Open Interest</div>
+                            <div class="price-value text-white">${priceData.open_interest || 0}</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Expiry Date</div>
+                            <div class="price-value text-white">${priceData.expiry_date || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            priceDiv.classList.remove('hidden');
+            
+            // Load expiries
+            const expiriesResponse = await fetch(`/api/nse/expiries/${symbol}`);
+            const expiries = await expiriesResponse.json();
+            
+            if (Array.isArray(expiries) && expiries.length > 0) {
+                let expiriesHtml = `
+                    <table class="forecast-table">
+                        <tr>
+                            <th>Expiry Date</th>
+                            <th>Days</th>
+                            <th>MTM Price</th>
+                        </tr>
+                `;
+                expiries.forEach(exp => {
+                    expiriesHtml += `
+                        <tr>
+                            <td class="text-white">${exp.expiry_date || 'N/A'}</td>
+                            <td class="text-white">${exp.days_to_expiry || 'N/A'}</td>
+                            <td class="text-white">KES ${exp.mtm_price?.toFixed(2) || 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+                expiriesHtml += '</table>';
+                expiriesDiv.innerHTML = expiriesHtml;
+            } else {
+                expiriesDiv.innerHTML = '<p class="text-gray-400">No expiries found</p>';
+            }
+            
+        } catch (error) {
+            console.error('Error loading price:', error);
+            priceDiv.innerHTML = '<p class="text-red-400">Error loading data</p>';
+            priceDiv.classList.remove('hidden');
+        }
+    }
+    
+    async function generateForecast() {
+        const symbol = document.getElementById('symbolSelect').value;
+        const horizon = parseInt(document.getElementById('horizon').value);
+        const modelType = document.getElementById('modelType').value;
+        const garchType = document.getElementById('garchType').value;
+        const resultsDiv = document.getElementById('results');
+        const btn = document.getElementById('forecastBtn');
+        
+        if (!symbol) {
+            showError('Please select a symbol');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner mr-2"></span> Generating...';
+        resultsDiv.innerHTML = '<div class="text-center py-8"><span class="loading-spinner"></span><p class="text-gray-400 mt-4">Generating forecast...</p></div>';
+        resultsDiv.classList.remove('hidden');
+        
+        try {
+            let endpoint = '/api/nse/forecast/';
+            if (modelType === 'garch') endpoint += 'volatility';
+            else if (modelType === 'arima') endpoint += 'price';
+            else endpoint += 'combined';
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    symbol, 
+                    horizon, 
+                    garch_type: garchType 
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.error && !result.forecasted_volatility_daily && !result.forecasted_prices) {
+                showError(result.error);
+            } else {
+                displayResults(result, modelType);
+            }
+        } catch (error) {
+            showError(`Error: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generate Forecast';
+        }
+    }
+    
+    function showError(message) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `
+            <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-6">
+                <p class="text-red-400">${message}</p>
+            </div>
+        `;
+        resultsDiv.classList.remove('hidden');
+    }
+    
+    function displayResults(result, modelType) {
+        const resultsDiv = document.getElementById('results');
+        let html = '';
+        
+        if (modelType === 'combined') {
+            if (result.volatility_forecast && !result.volatility_forecast.error) {
+                html += renderVolatilityResults(result.volatility_forecast);
+            }
+            if (result.price_forecast && !result.price_forecast.error) {
+                html += renderPriceResults(result.price_forecast);
+            }
+        } else if (modelType === 'garch') {
+            html = renderVolatilityResults(result);
+        } else {
+            html = renderPriceResults(result);
+        }
+        
+        resultsDiv.innerHTML = html;
+        resultsDiv.classList.remove('hidden');
+    }
+    
+    function renderVolatilityResults(vol) {
+        return `
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-6">
+                <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    📊 Volatility Forecast (${vol.model_type || 'GARCH'})
+                </h3>
+                
+                <div class="price-grid mb-4">
+                    <div class="price-item">
+                        <div class="price-label">Historical Daily Vol</div>
+                        <div class="price-value text-nse-light">${vol.historical_volatility_daily?.toFixed(4) || 'N/A'}%</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Historical Annual Vol</div>
+                        <div class="price-value text-nse-light">${vol.historical_volatility_annual?.toFixed(2) || 'N/A'}%</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Observations</div>
+                        <div class="price-value text-white">${vol.observations || 'N/A'}</div>
+                    </div>
+                </div>
+                
+                <table class="forecast-table">
+                    <tr>
+                        <th>Period</th>
+                        <th>Daily Vol (%)</th>
+                        <th>Annual Vol (%)</th>
+                    </tr>
+                    ${vol.forecasted_volatility_daily ? vol.forecasted_volatility_daily.map((v, i) => `
+                        <tr>
+                            <td class="text-white">T+${i + 1}</td>
+                            <td class="text-nse-light">${v.toFixed(4)}</td>
+                            <td class="text-nse-light">${vol.forecasted_volatility_annual[i].toFixed(2)}</td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="3" class="text-gray-400">No forecast available</td></tr>'}
+                </table>
+                
+                <div class="model-info">
+                    <strong class="text-white">Model Info:</strong> 
+                    AIC: <code>${vol.aic?.toFixed(2) || 'N/A'}</code> | 
+                    BIC: <code>${vol.bic?.toFixed(2) || 'N/A'}</code> | 
+                    Log-Likelihood: <code>${vol.log_likelihood?.toFixed(2) || 'N/A'}</code>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderPriceResults(price) {
+        return `
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 mb-6">
+                <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                    💰 Price Forecast (ARIMA${price.arima_order ? ` ${price.arima_order.join(',')}` : ''})
+                </h3>
+                
+                <div class="price-grid mb-4">
+                    <div class="price-item">
+                        <div class="price-label">Current Price</div>
+                        <div class="price-value text-white">KES ${price.current_price?.toFixed(2) || 'N/A'}</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Observations</div>
+                        <div class="price-value text-white">${price.observations || 'N/A'}</div>
+                    </div>
+                </div>
+                
+                <table class="forecast-table">
+                    <tr>
+                        <th>Period</th>
+                        <th>Forecast (KES)</th>
+                        <th>95% CI Lower</th>
+                        <th>95% CI Upper</th>
+                    </tr>
+                    ${price.forecasted_prices ? price.forecasted_prices.map((p, i) => `
+                        <tr>
+                            <td class="text-white">T+${i + 1}</td>
+                            <td class="text-nse-light">${p.toFixed(2)}</td>
+                            <td class="text-gray-400">${price.confidence_interval_lower?.[i]?.toFixed(2) || 'N/A'}</td>
+                            <td class="text-gray-400">${price.confidence_interval_upper?.[i]?.toFixed(2) || 'N/A'}</td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="4" class="text-gray-400">No forecast available</td></tr>'}
+                </table>
+                
+                <div class="model-info">
+                    <strong class="text-white">Model Info:</strong> 
+                    AIC: <code>${price.aic?.toFixed(2) || 'N/A'}</code> | 
+                    BIC: <code>${price.bic?.toFixed(2) || 'N/A'}</code>
+                </div>
+            </div>
+        `;
+    }
+</script>
+{% endblock %}

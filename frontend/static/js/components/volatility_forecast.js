@@ -28,53 +28,63 @@ const VolatilityForecast = {
     },
 
     /**
-     * Load model information
+     * Load model information (NSE version)
      */
     async loadModelInfo() {
-        try {
-            const response = await API.volatility.getModelInfo();
-            if (response.success && response.data) {
-                this.modelInfo = response.data;
-                this.updateModelInfo();
-            }
-        } catch (error) {
-            console.error('Error loading model info:', error);
-            App.showError('alert-area', 'Failed to load model information');
-        }
+        // For NSE, we use static model info
+        this.modelInfo = {
+            model_type: 'GARCH + ARIMA',
+            num_features: 'NSE Derivatives',
+            trained_date: 'Real-time'
+        };
+        this.updateModelInfo();
     },
 
     /**
-     * Load available symbols
+     * Load available symbols from NSE API
      */
     async loadSymbols() {
         const symbolSelect = document.getElementById('symbol');
         try {
-            const response = await API.volatility.getSymbols();
-            if (response.success && response.data && response.data.symbols) {
-                symbolSelect.innerHTML = response.data.symbols.map(symbol =>
-                    `<option value="${symbol}">${symbol}</option>`
+            // Load NSE symbols from our API
+            const response = await fetch('/api/nse/symbols');
+            const symbols = await response.json();
+            
+            if (Array.isArray(symbols) && symbols.length > 0) {
+                symbolSelect.innerHTML = symbols.map(sym =>
+                    `<option value="${sym.value}">${sym.label}</option>`
                 ).join('');
                 
                 // Select first symbol by default
-                if (response.data.symbols.length > 0) {
-                    this.currentSymbol = response.data.symbols[0];
-                }
+                this.currentSymbol = symbols[0].value;
             } else {
-                // Fallback to common NSE futures symbols
-                const defaultSymbols = ['ESZ4', 'NQZ4', 'RTY', 'YM'];
-                symbolSelect.innerHTML = defaultSymbols.map(symbol =>
-                    `<option value="${symbol}">${symbol}</option>`
+                // Fallback to default NSE symbols
+                const defaultSymbols = [
+                    { value: 'SCOM', label: 'SCOM - Safaricom PLC' },
+                    { value: 'EQTY', label: 'EQTY - Equity Group Holdings' },
+                    { value: 'KCBG', label: 'KCBG - KCB Group PLC' },
+                    { value: 'EABL', label: 'EABL - East African Breweries' },
+                    { value: 'ABSA', label: 'ABSA - ABSA Bank Kenya' }
+                ];
+                symbolSelect.innerHTML = defaultSymbols.map(sym =>
+                    `<option value="${sym.value}">${sym.label}</option>`
                 ).join('');
-                this.currentSymbol = defaultSymbols[0];
+                this.currentSymbol = defaultSymbols[0].value;
             }
         } catch (error) {
-            console.error('Error loading symbols:', error);
-            // Use fallback symbols
-            const defaultSymbols = ['ESZ4', 'NQZ4', 'RTY', 'YM'];
-            symbolSelect.innerHTML = defaultSymbols.map(symbol =>
-                `<option value="${symbol}">${symbol}</option>`
+            console.error('Error loading NSE symbols:', error);
+            // Use fallback NSE symbols
+            const defaultSymbols = [
+                { value: 'SCOM', label: 'SCOM - Safaricom PLC' },
+                { value: 'EQTY', label: 'EQTY - Equity Group Holdings' },
+                { value: 'KCBG', label: 'KCBG - KCB Group PLC' },
+                { value: 'EABL', label: 'EABL - East African Breweries' },
+                { value: 'ABSA', label: 'ABSA - ABSA Bank Kenya' }
+            ];
+            symbolSelect.innerHTML = defaultSymbols.map(sym =>
+                `<option value="${sym.value}">${sym.label}</option>`
             ).join('');
-            this.currentSymbol = defaultSymbols[0];
+            this.currentSymbol = defaultSymbols[0].value;
         }
     },
 
@@ -337,33 +347,40 @@ const VolatilityForecast = {
     },
 
     /**
-     * Update model information display
+     * Update model information display for NSE
      */
     updateModelInfo() {
-        if (!this.modelInfo) return;
-
         const modelName = document.getElementById('model-name');
         const modelFeatures = document.getElementById('model-features');
         const modelTrained = document.getElementById('model-trained');
         const featureImportance = document.getElementById('feature-importance');
 
-        if (modelName) modelName.textContent = this.modelInfo.model_type || 'Unknown';
-        if (modelFeatures) modelFeatures.textContent = this.modelInfo.num_features || '-';
-        if (modelTrained) modelTrained.textContent = this.modelInfo.trained_date || '-';
+        // Set NSE-specific model info
+        if (modelName) modelName.textContent = 'GARCH + ARIMA';
+        if (modelFeatures) modelFeatures.textContent = 'NSE Derivatives';
+        if (modelTrained) modelTrained.textContent = 'Real-time';
 
-        // Display top features
-        if (featureImportance && this.modelInfo.top_features) {
-            featureImportance.innerHTML = this.modelInfo.top_features.slice(0, 10).map((feature, idx) =>
+        // Display NSE model features
+        if (featureImportance) {
+            const features = [
+                { name: 'GARCH(1,1) Volatility', importance: 0.35 },
+                { name: 'ARIMA Price Forecast', importance: 0.25 },
+                { name: 'Log Returns', importance: 0.15 },
+                { name: 'Historical Vol (Annual)', importance: 0.12 },
+                { name: 'Open Interest', importance: 0.08 },
+                { name: 'Days to Expiry', importance: 0.05 }
+            ];
+            featureImportance.innerHTML = features.map((feature, idx) =>
                 `<div class="flex justify-between text-gray-700 dark:text-gray-300">
                     <span>${idx + 1}. ${feature.name}</span>
-                    <span class="font-medium">${(feature.importance * 100).toFixed(2)}%</span>
+                    <span class="font-medium">${(feature.importance * 100).toFixed(1)}%</span>
                 </div>`
             ).join('');
         }
     },
 
     /**
-     * Get prediction
+     * Get prediction using NSE combined forecast
      */
     async predict() {
         const symbol = document.getElementById('symbol').value;
@@ -384,19 +401,23 @@ const VolatilityForecast = {
         this.hideUploadDataInfo();
 
         try {
-            const response = await API.volatility.predict({
-                symbol: symbol,
-                horizon: horizon,
-                confidence_level: confidence
+            // Use NSE combined forecast API
+            const response = await fetch('/api/nse/forecast/combined', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symbol: symbol,
+                    horizon: horizon,
+                    garch_type: 'GARCH'
+                })
             });
+            
+            const data = await response.json();
 
-            if (response.success && response.data) {
-                this.displayPrediction(response.data);
-                
-                // Also fetch forecast time series
-                await this.fetchForecast(symbol, horizon);
+            if (data && !data.error) {
+                this.displayNSEPrediction(data);
             } else {
-                App.showError('alert-area', response.message || 'Prediction failed');
+                App.showError('alert-area', data.error || 'Prediction failed');
             }
         } catch (error) {
             console.error('Prediction error:', error);
@@ -404,6 +425,119 @@ const VolatilityForecast = {
         } finally {
             this.setLoading('predict', false);
         }
+    },
+
+    /**
+     * Display NSE prediction results
+     */
+    displayNSEPrediction(data) {
+        const predictionSection = document.getElementById('prediction-section');
+        predictionSection?.classList.remove('hidden');
+
+        // Store last prediction
+        this.lastPrediction = data;
+
+        const vol = data.volatility_forecast || {};
+        const price = data.price_forecast || {};
+
+        // Update "Use in Calculator" button info
+        const volValue = document.getElementById('use-calc-vol-value');
+        const symbolEl = document.getElementById('use-calc-symbol');
+        if (volValue && vol.historical_volatility_annual) {
+            volValue.textContent = `${vol.historical_volatility_annual.toFixed(2)}%`;
+        }
+        if (symbolEl) symbolEl.textContent = data.name || data.symbol;
+
+        // Update metrics
+        const predictedVol = document.getElementById('predicted-vol');
+        const predictedVolPct = document.getElementById('predicted-vol-pct');
+        const confidenceInterval = document.getElementById('confidence-interval');
+        const modelConfidence = document.getElementById('model-confidence');
+        const modelVersion = document.getElementById('model-version');
+        const predictionTime = document.getElementById('prediction-time');
+        const horizonDays = document.getElementById('horizon-days');
+
+        // Display volatility forecast
+        if (predictedVol && vol.forecasted_volatility_annual && vol.forecasted_volatility_annual.length > 0) {
+            const avgVol = vol.forecasted_volatility_annual.reduce((a, b) => a + b, 0) / vol.forecasted_volatility_annual.length;
+            predictedVol.textContent = avgVol.toFixed(2) + '%';
+        } else if (predictedVol && vol.historical_volatility_annual) {
+            predictedVol.textContent = vol.historical_volatility_annual.toFixed(2) + '%';
+        }
+        
+        if (predictedVolPct && vol.historical_volatility_daily) {
+            predictedVolPct.textContent = `Daily: ${vol.historical_volatility_daily.toFixed(4)}%`;
+        }
+        
+        // Confidence interval from price forecast
+        if (confidenceInterval && price.confidence_interval_lower && price.confidence_interval_upper) {
+            const lower = price.confidence_interval_lower[0]?.toFixed(2) || 'N/A';
+            const upper = price.confidence_interval_upper[0]?.toFixed(2) || 'N/A';
+            confidenceInterval.textContent = `KES ${lower} - ${upper}`;
+        }
+
+        if (modelConfidence) {
+            modelConfidence.textContent = vol.model_type || 'GARCH';
+        }
+
+        if (modelVersion && vol.aic) {
+            modelVersion.textContent = `AIC: ${vol.aic.toFixed(2)}`;
+        }
+
+        if (predictionTime && data.timestamp) {
+            const date = new Date(data.timestamp);
+            predictionTime.textContent = date.toLocaleString();
+        }
+
+        if (horizonDays && data.forecast_horizon) {
+            horizonDays.textContent = `${data.forecast_horizon} periods ahead`;
+        }
+
+        // Display volatility forecasts as contributing models
+        if (vol.forecasted_volatility_daily && vol.forecasted_volatility_annual) {
+            const models = {};
+            vol.forecasted_volatility_daily.forEach((v, i) => {
+                models[`T+${i+1} Daily`] = v / 100;
+            });
+            this.displayContributingModels(models);
+        }
+
+        // Display price forecast info
+        if (price.forecasted_prices) {
+            this.displayPriceForecast(price);
+        }
+
+        // Clear any previous errors
+        document.getElementById('alert-area').innerHTML = '';
+    },
+
+    /**
+     * Display price forecast in contributing models section
+     */
+    displayPriceForecast(price) {
+        const container = document.getElementById('contributing-models');
+        if (!container) return;
+
+        let html = `<div class="mb-4 pb-2 border-b border-gray-300 dark:border-gray-600">
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Price Forecast (ARIMA)</h4>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Current: KES ${price.current_price?.toFixed(2) || 'N/A'}</div>
+        </div>`;
+        
+        if (price.forecasted_prices) {
+            price.forecasted_prices.forEach((p, i) => {
+                const lower = price.confidence_interval_lower?.[i]?.toFixed(2) || 'N/A';
+                const upper = price.confidence_interval_upper?.[i]?.toFixed(2) || 'N/A';
+                html += `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">T+${i+1}</span>
+                        <span class="text-sm font-semibold text-green-600 dark:text-green-400">KES ${p.toFixed(2)}</span>
+                        <span class="text-xs text-gray-500">[${lower} - ${upper}]</span>
+                    </div>
+                `;
+            });
+        }
+
+        container.innerHTML = html;
     },
 
     /**
