@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Volatility Forecasting - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<!-- Main Header -->
+<div class="bg-gradient-to-r from-nse-dark to-nse-primary p-8 rounded-2xl text-white shadow-xl mb-8">
+    <h2 class="text-4xl font-bold m-0">Volatility Forecasting</h2>
+    <p class="mt-3 text-white/80 text-lg">ML-Powered Volatility Predictions • 75+ Features • Real-time Analytics</p>
+</div>
+
+<!-- Main Layout -->
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Forecast Parameters</h3>
+
+        <form id="volatility-form" class="space-y-4">
+            <!-- Symbol Selection -->
+            <div>
+                <label class="input-label" for="symbol">Futures Symbol</label>
+                <select id="symbol" class="input-field">
+                    <option value="">Loading symbols...</option>
+                </select>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select a futures contract to forecast</p>
+            </div>
+
+            <!-- Forecast Horizon -->
+            <div>
+                <label class="input-label" for="horizon">Forecast Horizon (Days)</label>
+                <input type="number" id="horizon" class="input-field" value="5" min="1" max="30" step="1">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Number of days to forecast ahead</p>
+            </div>
+
+            <!-- Confidence Level -->
+            <div>
+                <label class="input-label" for="confidence">
+                    Confidence Level (%)
+                    <span class="help-tooltip ml-1" data-tip="Confidence interval for predictions. 95% means we're 95% confident the actual value will fall within the predicted range.">?</span>
+                </label>
+                <input type="range" id="confidence" class="w-full accent-nse-primary" min="80" max="99" value="95">
+                <p class="text-sm text-green-600 dark:text-green-400 mt-1"><span id="confidence-display">95</span>%</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2">
+                <button type="button" id="predict-btn" class="btn-primary w-full">
+                    <span id="predict-btn-text">Get Prediction</span>
+                    <span id="predict-spinner" class="hidden ml-2">
+                        <svg class="animate-spin h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+
+                <button type="button" id="backtest-btn" class="btn-secondary w-full">
+                    <span id="backtest-btn-text">Run Backtest</span>
+                    <span id="backtest-spinner" class="hidden ml-2">
+                        <svg class="animate-spin h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+
+            <hr class="border-gray-300 dark:border-gray-600">
+
+            <!-- Model Information -->
+            <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Model Information</h4>
+                <div id="model-info" class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div class="flex justify-between">
+                        <span>Model:</span>
+                        <span id="model-name" class="font-medium text-gray-900 dark:text-white">Loading...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Features:</span>
+                        <span id="model-features" class="font-medium text-gray-900 dark:text-white">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Trained:</span>
+                        <span id="model-trained" class="font-medium text-gray-900 dark:text-white">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Importance (collapsible) -->
+            <details class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                <summary class="cursor-pointer font-semibold text-gray-900 dark:text-white">Top Features</summary>
+                <div id="feature-importance" class="mt-2 space-y-1 text-xs">
+                    <!-- Populated by JS -->
+                </div>
+            </details>
+
+            <hr class="border-gray-300 dark:border-gray-600">
+
+            <!-- Custom Data Upload -->
+            <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <svg class="w-5 h-5 inline-block mr-1 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Upload Custom Data
+                </h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Upload your own OHLCV data for prediction</p>
+                
+                <!-- Drop Zone -->
+                <div id="drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center transition-all hover:border-purple-400 dark:hover:border-purple-500 cursor-pointer">
+                    <input type="file" id="file-input" class="hidden" accept=".csv,.json">
+                    <svg class="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        <span class="text-purple-600 dark:text-purple-400 font-medium">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">CSV or JSON (max 10MB)</p>
+                </div>
+
+                <!-- File Info -->
+                <div id="file-info" class="hidden mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="file-name" class="text-sm font-medium text-purple-700 dark:text-purple-300">file.csv</span>
+                        </div>
+                        <button type="button" id="clear-file" class="text-red-500 hover:text-red-700 text-sm">Clear</button>
+                    </div>
+                    <div id="file-size" class="text-xs text-purple-600 dark:text-purple-400 mt-1">Size: 0 KB</div>
+                </div>
+
+                <!-- Upload Button -->
+                <button type="button" id="upload-predict-btn" class="btn-secondary w-full mt-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 border-0 disabled:opacity-50" disabled>
+                    <span id="upload-btn-text">Upload & Predict</span>
+                    <span id="upload-spinner" class="hidden ml-2">
+                        <svg class="animate-spin h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Download Template -->
+                <a href="/api/volatility/template" download class="block text-center text-xs text-purple-600 dark:text-purple-400 hover:underline mt-2">
+                    📥 Download sample CSV template
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Alert Area -->
+        <div id="alert-area"></div>
+
+        <!-- Uploaded Data Info (shown when predicting from uploaded data) -->
+        <div id="upload-data-info" class="hidden mb-6">
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-bold text-lg" id="upload-data-name">Custom Data</h4>
+                            <p class="text-white/80 text-sm">
+                                <span id="upload-data-rows">0</span> data points • 
+                                <span id="upload-data-range">-</span>
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">Uploaded Data</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Prediction -->
+        <div id="prediction-section" class="hidden">
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Current Prediction</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">ML-powered volatility forecast</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
+                    <!-- Predicted Volatility -->
+                    <div class="metric-card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+                        <div class="metric-label">Predicted Volatility</div>
+                        <div class="text-2xl font-bold text-blue-700 dark:text-blue-400" id="predicted-vol">-</div>
+                        <div class="text-xs text-blue-600 dark:text-blue-500 mt-1" id="predicted-vol-pct">-</div>
+                    </div>
+
+                    <!-- Confidence Interval -->
+                    <div class="metric-card bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
+                        <div class="metric-label">Confidence Interval</div>
+                        <div class="text-lg font-bold text-purple-700 dark:text-purple-400" id="confidence-interval">-</div>
+                        <div class="text-xs text-purple-600 dark:text-purple-500 mt-1">95% CI Range</div>
+                    </div>
+
+                    <!-- Model Confidence -->
+                    <div class="metric-card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                        <div class="metric-label">Model Confidence</div>
+                        <div class="text-2xl font-bold text-green-700 dark:text-green-400" id="model-confidence">-</div>
+                        <div class="text-xs text-green-600 dark:text-green-500 mt-1" id="model-version">-</div>
+                    </div>
+
+                    <!-- Forecast Horizon -->
+                    <div class="metric-card bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
+                        <div class="metric-label">Forecast Horizon</div>
+                        <div class="text-lg font-bold text-amber-700 dark:text-amber-400" id="horizon-days">-</div>
+                        <div class="text-xs text-amber-600 dark:text-amber-500 mt-1" id="prediction-time">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contributing Models -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Ensemble Model Breakdown</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Individual model contributions</p>
+                </div>
+                <div class="p-6">
+                    <div id="contributing-models" class="space-y-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backtest Results -->
+        <div id="backtest-section" class="hidden">
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Classification Metrics</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Model accuracy on historical data</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
+                    <!-- Accuracy -->
+                    <div class="metric-card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+                        <div class="metric-label">Accuracy</div>
+                        <div class="text-3xl font-bold text-blue-700 dark:text-blue-400" id="backtest-accuracy">-</div>
+                        <div class="text-xs text-blue-600 dark:text-blue-500 mt-1">Direction Prediction</div>
+                    </div>
+
+                    <!-- AUC -->
+                    <div class="metric-card bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
+                        <div class="metric-label">Test AUC</div>
+                        <div class="text-3xl font-bold text-purple-700 dark:text-purple-400" id="backtest-auc">-</div>
+                        <div class="text-xs text-purple-600 dark:text-purple-500 mt-1">ROC AUC Score</div>
+                    </div>
+
+                    <!-- Total Predictions -->
+                    <div class="metric-card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                        <div class="metric-label">Total Predictions</div>
+                        <div class="text-3xl font-bold text-green-700 dark:text-green-400" id="backtest-total-preds">-</div>
+                        <div class="text-xs text-green-600 dark:text-green-500 mt-1">Test Samples</div>
+                    </div>
+
+                    <!-- Test Period -->
+                    <div class="metric-card bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
+                        <div class="metric-label">Test Period</div>
+                        <div class="text-sm font-bold text-amber-700 dark:text-amber-400" id="backtest-period">-</div>
+                        <div class="text-xs text-amber-600 dark:text-amber-500 mt-1">Date Range</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Performance Metrics -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Trading Performance</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Simulated trading results</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
+                    <!-- Total Return -->
+                    <div class="metric-card bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20">
+                        <div class="metric-label">Total Return</div>
+                        <div class="text-2xl font-bold text-emerald-700 dark:text-emerald-400" id="backtest-return">-</div>
+                        <div class="text-xs text-emerald-600 dark:text-emerald-500 mt-1">Net Profit</div>
+                    </div>
+
+                    <!-- Win Rate -->
+                    <div class="metric-card bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20">
+                        <div class="metric-label">Win Rate</div>
+                        <div class="text-2xl font-bold text-cyan-700 dark:text-cyan-400" id="backtest-winrate">-</div>
+                        <div class="text-xs text-cyan-600 dark:text-cyan-500 mt-1">Profitable Trades</div>
+                    </div>
+
+                    <!-- Sharpe Ratio -->
+                    <div class="metric-card bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20">
+                        <div class="metric-label">Sharpe Ratio</div>
+                        <div class="text-2xl font-bold text-indigo-700 dark:text-indigo-400" id="backtest-sharpe">-</div>
+                        <div class="text-xs text-indigo-600 dark:text-indigo-500 mt-1">Risk-Adjusted Return</div>
+                    </div>
+
+                    <!-- Max Drawdown -->
+                    <div class="metric-card bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20">
+                        <div class="metric-label">Max Drawdown</div>
+                        <div class="text-2xl font-bold text-rose-700 dark:text-rose-400" id="backtest-maxdd">-</div>
+                        <div class="text-xs text-rose-600 dark:text-rose-500 mt-1">Largest Loss</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Information -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h3 class="text-xl font-bold">Model Configuration</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Backtest setup details</p>
+                </div>
+                <div class="p-6">
+                    <div id="backtest-model-info">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Welcome State -->
+        <div id="welcome-state" class="text-center py-16">
+            <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="mt-6 text-xl font-semibold text-gray-900 dark:text-white">Ready to Forecast Volatility</h3>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Select a symbol and click "Get Prediction" to start</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/components/volatility_forecast.js') }}"></script>
+{% endblock %}

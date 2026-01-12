@@ -209,6 +209,55 @@ const API = {
         async verify() {
             return API.authGet('/auth/verify');
         }
+    },
+
+    // Volatility API
+    volatility: {
+        async predict(params) {
+            return API.post('/volatility/predict', params);
+        },
+
+        async getForecast(symbol, horizon = 5) {
+            return API.get(`/volatility/forecast/${symbol}?horizon=${horizon}`);
+        },
+
+        async backtest(params) {
+            return API.post('/volatility/backtest', params);
+        },
+
+        async getModelInfo() {
+            return API.get('/volatility/model-info');
+        },
+
+        async getSymbols() {
+            return API.get('/volatility/symbols');
+        },
+
+        async health() {
+            return API.get('/volatility/health');
+        },
+
+        async uploadAndPredict(file, horizonDays = 12, dataName = 'uploaded_data') {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('horizon_days', horizonDays);
+            formData.append('data_name', dataName);
+
+            const url = `${API.baseURL}/volatility/upload`;
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            return response.json();
+        },
+
+        async getUploadRequirements() {
+            return API.get('/volatility/upload-requirements');
+        },
+
+        getTemplateUrl() {
+            return `${API.baseURL}/volatility/template`;
+        }
     }
 };
 

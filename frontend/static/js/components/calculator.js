@@ -3,6 +3,8 @@
  */
 
 const Calculator = {
+    mlVolatility: null,  // Store ML prediction
+
     /**
      * Initialize calculator
      */
@@ -150,6 +152,18 @@ const Calculator = {
                 rateInput.value = Math.min(100, parseFloat(rateInput.value) + 0.5).toFixed(2);
                 this.calculate();
             });
+        }
+
+        // ML Volatility prediction
+        const fetchMLBtn = document.getElementById('fetch-ml-vol');
+        if (fetchMLBtn) {
+            fetchMLBtn.addEventListener('click', () => this.fetchMLVolatility());
+        }
+
+        // Use ML Volatility button
+        const useMLBtn = document.getElementById('use-ml-vol');
+        if (useMLBtn) {
+            useMLBtn.addEventListener('click', () => this.useMLVolatility());
         }
 
         const minVol = document.getElementById('min-vol');
@@ -514,6 +528,116 @@ const Calculator = {
                 document.getElementById('include_fees').checked = true;
                 document.getElementById('fee-breakdown').classList.remove('hidden');
             }
+        }
+    },
+
+    /**
+     * Fetch ML volatility prediction
+     */
+    async fetchMLVolatility() {
+        const symbol = document.getElementById('contract')?.value || 'ESZ4';
+        const fetchBtn = document.getElementById('fetch-ml-vol');
+        const spinner = document.getElementById('fetch-ml-spinner');
+        const btnText = document.getElementById('fetch-ml-text');
+
+        // Show loading state
+        if (fetchBtn) fetchBtn.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+        if (btnText) btnText.textContent = 'Loading...';
+
+        try {
+            const response = await API.volatility.predict({
+                symbol: symbol,
+                horizon: 1,
+                confidence_level: 0.95
+            });
+
+            if (response.success && response.data) {
+                this.mlVolatility = response.data;
+                this.displayMLPrediction(response.data);
+            } else {
+                console.error('ML prediction failed:', response.message);
+                alert(response.message || 'Failed to fetch ML prediction');
+            }
+        } catch (error) {
+            console.error('ML prediction error:', error);
+            alert('Failed to fetch ML prediction. Please ensure you have historical data for this symbol.');
+        } finally {
+            // Reset button state
+            if (fetchBtn) fetchBtn.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
+            if (btnText) btnText.textContent = 'Get Prediction';
+        }
+    },
+
+    /**
+     * Display ML prediction results
+     */
+    displayMLPrediction(data) {
+        const resultSection = document.getElementById('ml-prediction-result');
+        const placeholder = document.getElementById('ml-prediction-placeholder');
+        
+        if (placeholder) placeholder.classList.add('hidden');
+        if (resultSection) resultSection.classList.remove('hidden');
+
+        // Update values
+        const mlVolValue = document.getElementById('ml-vol-value');
+        const mlVolPercent = document.getElementById('ml-vol-percent');
+        const mlConfidence = document.getElementById('ml-confidence');
+        const mlVsCurrent = document.getElementById('ml-vs-current');
+
+        const predictedVol = data.predicted_volatility;
+        const currentVol = parseFloat(document.getElementById('volatility').value) / 100;
+
+        if (mlVolValue) mlVolValue.textContent = predictedVol.toFixed(4);
+        if (mlVolPercent) mlVolPercent.textContent = `${(predictedVol * 100).toFixed(2)}%`;
+        
+        if (mlConfidence && data.confidence_interval) {
+            const lower = (data.confidence_interval.lower * 100).toFixed(2);
+            const upper = (data.confidence_interval.upper * 100).toFixed(2);
+            mlConfidence.textContent = `${lower}% - ${upper}%`;
+        }
+
+        if (mlVsCurrent) {
+            const diff = ((predictedVol - currentVol) / currentVol * 100).toFixed(1);
+            const color = diff > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+            mlVsCurrent.className = `text-lg font-bold ${color}`;
+            mlVsCurrent.textContent = `${diff > 0 ? '+' : ''}${diff}%`;
+        }
+    },
+
+    /**
+     * Use ML volatility in calculator
+     */
+    useMLVolatility() {
+        if (!this.mlVolatility) return;
+
+        const predictedVol = this.mlVolatility.predicted_volatility;
+        const volPct = Math.round(predictedVol * 100);
+
+        // Update volatility slider
+        const volatilitySlider = document.getElementById('volatility');
+        const volatilityDisplay = document.getElementById('volatility-display');
+        const volatilityPct = document.getElementById('volatility-pct');
+
+        if (volatilitySlider) volatilitySlider.value = volPct;
+        if (volatilityDisplay) volatilityDisplay.textContent = volPct;
+        if (volatilityPct) volatilityPct.textContent = volPct;
+
+        // Recalculate prices
+        this.calculate();
+        this.saveInputs();
+
+        // Show success message
+        const useMLBtn = document.getElementById('use-ml-vol');
+        if (useMLBtn) {
+            const originalText = useMLBtn.textContent;
+            useMLBtn.textContent = '✓ Applied!';
+            useMLBtn.classList.add('bg-green-600');
+            setTimeout(() => {
+                useMLBtn.textContent = originalText;
+                useMLBtn.classList.remove('bg-green-600');
+            }, 2000);
         }
     }
 };

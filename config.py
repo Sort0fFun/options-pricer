@@ -8,6 +8,9 @@ from datetime import timedelta
 class Config:
     """Base configuration."""
 
+    # Get base directory
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
@@ -29,6 +32,11 @@ class Config:
 
     # Data file paths
     NSE_DATA_FILE = os.environ.get('NSE_DATA_FILE', '/Users/mac/Downloads/Ahona_Amanda_Derivatives_Price_Lists_2025.csv')
+
+    # Volatility Forecasting configuration
+    VOLATILITY_MODEL_PATH = os.path.join(BASE_DIR, 'volatility_forecaster_v2_enhanced.joblib')
+    VOLATILITY_DATA_DIR = os.path.join(BASE_DIR, 'data')
+    VOLATILITY_CACHE_DIR = os.path.join(BASE_DIR, 'cache', 'volatility')
 
     # Flask-RESTX settings
     RESTX_MASK_SWAGGER = False

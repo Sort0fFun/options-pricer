@@ -66,3 +66,11 @@ pnl_analysis.py
 strategies_calculator.py
 strategies_model.py
 data
+cache/volatility/MESH6_bars_5min.parquet
+cache/volatility/MESH6_raw_data.parquet
+cache/volatility/MESZ5_bars_5min.parquet
+cache/volatility/MESZ5_raw_data.parquet
+cache/volatility/NQZ5-NQH6_bars_5min.parquet
+cache/volatility/NQZ5-NQH6_raw_data.parquet
+cache/volatility/NQZ5-NQM6_bars_5min.parquet
+cache/volatility/NQZ5-NQM6_raw_data.parquet

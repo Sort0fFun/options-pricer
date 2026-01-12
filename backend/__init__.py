@@ -54,6 +54,10 @@ def create_app(config_name='default'):
     WalletService.init_app(mongo)
     MpesaService.init_app(app)
 
+    # Initialize volatility forecasting service
+    from backend.services.volatility_service import VolatilityForecasterService
+    VolatilityForecasterService.init_app(app)
+
     # Register blueprints
     from backend.api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
