@@ -22,12 +22,7 @@ chat_message_model = ns.model('ChatMessage', {
 # Daily free tokens configuration
 DAILY_FREE_TOKENS = 4
 
-# Initialize chatbot service (singleton)
-try:
-    chatbot_service = ChatbotService()
-except Exception as e:
-    print(f"Warning: ChatbotService initialization failed: {e}")
-    chatbot_service = None
+# Note: ChatbotService is no longer a singleton, it's created per-request with user context
 
 
 def check_and_grant_daily_tokens(user_id: str) -> dict:
@@ -83,12 +78,6 @@ class ChatMessage(Resource):
     @jwt_required()
     def post(self):
         """Send message and get AI response. Requires authentication and tokens."""
-        if chatbot_service is None:
-            return {
-                'success': False,
-                'message': 'Chatbot service is not available. Please check OPENAI_API_KEY.'
-            }, 503
-
         user_id = get_jwt_identity()
         
         try:
@@ -113,6 +102,9 @@ class ChatMessage(Resource):
 
             # Use one token
             WalletService.use_token(user_id, 1)
+
+            # Create chatbot service instance for this user
+            chatbot_service = ChatbotService(user_id=user_id)
 
             # Get response
             result = chatbot_service.send_message(
@@ -151,13 +143,9 @@ class ChatSuggestions(Resource):
     @ns.doc('get_suggestions')
     def get(self):
         """Get list of suggested questions."""
-        if chatbot_service is None:
-            return {
-                'success': False,
-                'message': 'Chatbot service is not available.'
-            }, 503
-
         try:
+            # Create a temporary chatbot service instance to get suggestions
+            chatbot_service = ChatbotService()
             suggestions = chatbot_service.get_suggestions()
             return {
                 'success': True,
@@ -208,16 +196,14 @@ class ChatClear(Resource):
     """Clear conversation history."""
 
     @ns.doc('clear_conversation')
+    @jwt_required()
     def post(self):
         """Clear server-side conversation history."""
-        if chatbot_service is None:
-            return {
-                'success': False,
-                'message': 'Chatbot service is not available.'
-            }, 503
-
+        user_id = get_jwt_identity()
+        
         try:
-            chatbot_service.clear_conversation()
+            # Note: With persistent sessions, this would mark the current session as inactive
+            # For now, we just return success since each request creates a new service instance
             return {
                 'success': True,
                 'message': 'Conversation cleared'

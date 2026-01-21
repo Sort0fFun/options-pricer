@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - NSE Options Pricer{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Reports</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Generate and download reports for your transactions and AI chat sessions</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Generate Report Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sticky top-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-nse-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Generate New Report
+                </h3>
+                
+                <form id="generate-report-form" class="space-y-4">
+                    <!-- Report Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Type</label>
+                        <select id="report-type" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-nse-primary focus:border-transparent">
+                            <option value="transaction">Transaction Report</option>
+                            <option value="chat">AI Chat Sessions</option>
+                            <option value="combined">Combined Report</option>
+                            <option value="activity">Activity Summary</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="start-date" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-nse-primary">
+                            <input type="date" id="end-date" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-nse-primary">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Defaults to last 30 days if not specified</p>
+                    </div>
+
+                    <!-- Include Charts -->
+                    <div class="flex items-center">
+                        <input type="checkbox" id="include-charts" class="w-4 h-4 text-nse-primary bg-gray-100 border-gray-300 rounded focus:ring-nse-primary dark:focus:ring-nse-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" checked>
+                        <label for="include-charts" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Include charts and visualizations</label>
+                    </div>
+
+                    <!-- Custom Title -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Title (Optional)</label>
+                        <input type="text" id="report-title" placeholder="e.g., Q1 2026 Summary" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-nse-primary">
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button type="submit" id="generate-btn" class="w-full py-3 bg-nse-primary text-white font-semibold rounded-lg hover:bg-nse-secondary transition-colors flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>Generate Report</span>
+                    </button>
+                </form>
+
+                <!-- Report Types Info -->
+                <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Report Types</h4>
+                    <ul class="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+                        <li><strong>Transaction:</strong> Wallet deposits, payments, and token purchases</li>
+                        <li><strong>AI Chat:</strong> Your Flavia AI conversation history</li>
+                        <li><strong>Combined:</strong> Both transactions and chat sessions</li>
+                        <li><strong>Activity:</strong> Overall account activity summary</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Generated Reports</h3>
+                    <button id="refresh-reports" class="p-2 text-gray-600 dark:text-gray-400 hover:text-nse-primary dark:hover:text-nse-light transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="reports-loading" class="space-y-4">
+                    <div class="animate-pulse flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="reports-empty" class="hidden text-center py-12">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p class="text-gray-600 dark:text-gray-400">No reports generated yet</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">Create your first report using the form on the left</p>
+                </div>
+
+                <!-- Reports List -->
+                <div id="reports-list" class="space-y-3">
+                    <!-- Reports will be loaded here -->
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="hidden mt-6 flex items-center justify-between">
+                    <button id="prev-page" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <span id="page-info" class="text-sm text-gray-600 dark:text-gray-400">Page 1 of 1</span>
+                    <button id="next-page" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="generating-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md mx-4 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-nse-primary mx-auto mb-4"></div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generating Report</h3>
+        <p class="text-gray-600 dark:text-gray-400">This may take a few moments...</p>
+    </div>
+</div>
+
+<script>
+// Report type badges config
+const reportTypeColors = {
+    'transaction': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    'chat': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    'combined': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+    'activity': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+};
+
+let currentPage = 1;
+let totalPages = 1;
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Load reports
+async function loadReports(page = 1) {
+    const reportsList = document.getElementById('reports-list');
+    const reportsLoading = document.getElementById('reports-loading');
+    const reportsEmpty = document.getElementById('reports-empty');
+    const pagination = document.getElementById('pagination');
+
+    reportsLoading.classList.remove('hidden');
+    reportsList.innerHTML = '';
+    reportsEmpty.classList.add('hidden');
+
+    try {
+        const token = localStorage.getItem('auth_access_token');
+        if (!token) {
+            reportsLoading.classList.add('hidden');
+            reportsEmpty.classList.remove('hidden');
+            reportsEmpty.innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-gray-600 dark:text-gray-400">Please log in to view reports</p>
+                    <a href="/login?redirect=/reports" class="inline-block mt-4 px-6 py-2 bg-nse-primary text-white rounded-lg hover:bg-nse-secondary">Log In</a>
+                </div>
+            `;
+            return;
+        }
+        
+        const response = await fetch(`/api/reports/list?page=${page}&per_page=10`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        
+        // Check for auth errors
+        if (response.status === 401 || (data.message && data.message.includes('token'))) {
+            localStorage.removeItem('auth_access_token');
+            localStorage.removeItem('auth_refresh_token');
+            reportsLoading.classList.add('hidden');
+            reportsEmpty.classList.remove('hidden');
+            reportsEmpty.innerHTML = `
+                <div class="text-center py-12">
+                    <p class="text-gray-600 dark:text-gray-400 mb-2">Session expired</p>
+                    <a href="/login?redirect=/reports" class="inline-block px-6 py-2 bg-nse-primary text-white rounded-lg hover:bg-nse-secondary">Log In Again</a>
+                </div>
+            `;
+            return;
+        }
+
+        reportsLoading.classList.add('hidden');
+
+        if (data.success && data.reports.length > 0) {
+            reportsList.innerHTML = data.reports.map(report => `
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <h4 class="font-semibold text-gray-900 dark:text-white">${report.title}</h4>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium ${reportTypeColors[report.report_type]}">${report.report_type}</span>
+                            </div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <div class="flex items-center gap-4">
+                                    <span>📅 ${formatDate(report.start_date)} - ${formatDate(report.end_date)}</span>
+                                    <span>📄 ${formatFileSize(report.file_size)}</span>
+                                </div>
+                                <div>Created: ${formatDate(report.created_at)}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 ml-4">
+                            <button onclick="downloadReport('${report.id}', '${report.title}')" class="p-2 text-nse-primary hover:bg-nse-primary/10 rounded-lg transition-colors" title="Download">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteReport('${report.id}')" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update pagination
+            currentPage = data.page;
+            totalPages = Math.ceil(data.total / data.per_page);
+            
+            if (totalPages > 1) {
+                pagination.classList.remove('hidden');
+                document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+                document.getElementById('prev-page').disabled = currentPage === 1;
+                document.getElementById('next-page').disabled = currentPage === totalPages;
+            } else {
+                pagination.classList.add('hidden');
+            }
+        } else {
+            reportsEmpty.classList.remove('hidden');
+        }
+    } catch (error) {
+        reportsLoading.classList.add('hidden');
+        console.error('Error loading reports:', error);
+        reportsList.innerHTML = '<div class="text-center py-8 text-red-600">Error loading reports</div>';
+    }
+}
+
+// Generate report
+document.getElementById('generate-report-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const reportType = document.getElementById('report-type').value;
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    const includeCharts = document.getElementById('include-charts').checked;
+    const title = document.getElementById('report-title').value;
+
+    const modal = document.getElementById('generating-modal');
+    modal.classList.remove('hidden');
+
+    // Build request payload
+    const payload = {
+        report_type: reportType,
+        include_charts: includeCharts
+    };
+    
+    // Only add dates if they have values
+    if (startDate) payload.start_date = startDate;
+    if (endDate) payload.end_date = endDate;
+    if (title) payload.title = title;
+    
+    console.log('Sending payload:', payload);
+
+    try {
+        const token = localStorage.getItem('auth_access_token');
+        if (!token) {
+            modal.classList.add('hidden');
+            alert('Please log in to generate reports');
+            window.location.href = '/login?redirect=/reports';
+            return;
+        }
+        
+        const response = await fetch('/api/reports/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        modal.classList.add('hidden');
+        
+        console.log('Response:', data);
+        
+        // Check for auth errors
+        if (response.status === 401 || (data.message && data.message.includes('token'))) {
+            localStorage.removeItem('auth_access_token');
+            localStorage.removeItem('auth_refresh_token');
+            alert('Session expired. Please log in again.');
+            window.location.href = '/login?redirect=/reports';
+            return;
+        }
+
+        if (data.success) {
+            // Reset form
+            document.getElementById('generate-report-form').reset();
+            document.getElementById('include-charts').checked = true;
+            
+            // Set default dates again
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            document.getElementById('end-date').valueAsDate = today;
+            document.getElementById('start-date').valueAsDate = thirtyDaysAgo;
+            
+            // Reload reports
+            await loadReports(1);
+            
+            // Show success message
+            alert('Report generated successfully!');
+        } else {
+            // Better error display
+            let errorMsg = data.message || 'Failed to generate report';
+            if (data.errors && Array.isArray(data.errors)) {
+                errorMsg += '\n\nDetails:\n' + data.errors.map(e => `- ${e.msg || e.message || JSON.stringify(e)}`).join('\n');
+            }
+            alert('Error: ' + errorMsg);
+        }
+    } catch (error) {
+        modal.classList.add('hidden');
+        console.error('Error generating report:', error);
+        alert('Failed to generate report. Please try again.\n\nError: ' + error.message);
+    }
+});
+
+// Download report
+async function downloadReport(reportId, reportTitle) {
+    try {
+        const token = localStorage.getItem('auth_access_token');
+        const response = await fetch(`/api/reports/${reportId}/download`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            alert('Error: ' + (data.message || 'Failed to download report'));
+            return;
+        }
+
+        // Get the blob from response
+        const blob = await response.blob();
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${reportTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Error downloading report:', error);
+        alert('Failed to download report. Please try again.');
+    }
+}
+
+// Delete report
+async function deleteReport(reportId) {
+    if (!confirm('Are you sure you want to delete this report?')) return;
+
+    try {uth_a
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/reports/${reportId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            await loadReports(currentPage);
+        } else {
+            alert('Error: ' + (data.message || 'Failed to delete report'));
+        }
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        alert('Failed to delete report. Please try again.');
+    }
+}
+
+// Pagination handlers
+document.getElementById('prev-page').addEventListener('click', () => {
+    if (currentPage > 1) loadReports(currentPage - 1);
+});
+
+document.getElementById('next-page').addEventListener('click', () => {
+    if (currentPage < totalPages) loadReports(currentPage + 1);
+});
+
+document.getElementById('refresh-reports').addEventListener('click', () => {
+    loadReports(currentPage);
+});
+
+// Set default dates (last 30 days)
+const today = new Date();
+const thirtyDaysAgo = new Date(today);
+thirtyDaysAgo.setDate(today.getDate() - 30);
+
+document.getElementById('end-date').valueAsDate = today;
+document.getElementById('start-date').valueAsDate = thirtyDaysAgo;
+
+// Check authentication on page load
+function checkAuth() {
+    const token = localStorage.getItem('auth_access_token');
+    if (!token) {
+        // Show login message instead of redirect loop
+        document.getElementById('reports-loading').classList.add('hidden');
+        document.getElementById('reports-empty').classList.remove('hidden');
+        document.getElementById('reports-empty').innerHTML = `
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <p class="text-gray-900 dark:text-white text-lg font-semibold mb-2">Authentication Required</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Please log in to view and generate reports</p>
+                <a href="/login?redirect=/reports" class="inline-block px-6 py-3 bg-nse-primary text-white font-semibold rounded-lg hover:bg-nse-secondary transition-colors">
+                    Log In
+                </a>
+            </div>
+        `;
+        return false;
+    }
+    return true;
+}
+
+// Load reports on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (checkAuth()) {
+        loadReports(1);
+    }
+});
+</script>
+{% endblock %}

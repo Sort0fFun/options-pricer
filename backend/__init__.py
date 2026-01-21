@@ -53,6 +53,14 @@ def create_app(config_name='default'):
     from backend.services.mpesa_service import MpesaService
     WalletService.init_app(mongo)
     MpesaService.init_app(app)
+    
+    # Initialize chatbot service
+    from backend.services.chatbot_service import ChatbotService
+    ChatbotService.init_app(mongo)
+    
+    # Initialize report service
+    from backend.services.report_service import ReportService
+    ReportService.init_app(mongo)
 
     # Initialize volatility forecasting service
     from backend.services.volatility_service import VolatilityForecasterService

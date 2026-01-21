@@ -46,6 +46,11 @@ def init_app(app):
     def wallet():
         """User wallet page."""
         return render_template('wallet.html')
+    
+    @app.route('/reports')
+    def reports():
+        """Reports page."""
+        return render_template('reports.html')
 
     @app.route('/volatility')
     def volatility_forecast():
