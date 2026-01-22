@@ -71,3 +71,8 @@ htmlcov/
 
 # Docker
 .dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# Model files (mounted as volumes, not copied)
+*.joblib

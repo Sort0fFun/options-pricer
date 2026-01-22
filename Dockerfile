@@ -1,38 +1,46 @@
-# Use Python 3.11 slim image
-FROM python:3.11-slim
+# Stage 1: Builder - Install dependencies
+FROM python:3.11-slim AS builder
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies to user directory for easy copying
+RUN pip install --user --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Stage 2: Runtime - Minimal production image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime system dependencies and create non-root user
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 appuser
+
+# Copy installed Python packages from builder
+COPY --from=builder /root/.local /home/appuser/.local
+
+# Copy application code with correct ownership
+COPY --chown=appuser:appuser . .
 
 # Create logs directory
-RUN mkdir -p logs
-
-# Expose Flask port
-EXPOSE 5001
+RUN mkdir -p logs && chown appuser:appuser logs
 
 # Set environment variables
+ENV PATH=/home/appuser/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_ENV=production
 ENV FLASK_HOST=0.0.0.0
 ENV FLASK_PORT=5001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl --fail http://localhost:5001/api/health || exit 1
+# Expose Flask port
+EXPOSE 5001
+
+# Switch to non-root user
+USER appuser
 
 # Run with gunicorn for production
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "4", "--threads", "2", "--timeout", "120", "flask_app:app"]

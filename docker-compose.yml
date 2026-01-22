@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   flask-app:
     build:
@@ -8,30 +6,26 @@ services:
     container_name: options-pricer-flask
     ports:
       - "5001:5001"
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=production
       - FLASK_HOST=0.0.0.0
       - FLASK_PORT=5001
       - PYTHONUNBUFFERED=1
-      # MongoDB - use external or local
-      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017/options_pricer}
-      # Security keys (set in .env or pass at runtime)
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-in-production}
-      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
-      # OpenAI
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # M-Pesa Configuration
-      - MPESA_CONSUMER_KEY=${MPESA_CONSUMER_KEY}
-      - MPESA_CONSUMER_SECRET=${MPESA_CONSUMER_SECRET}
-      - MPESA_PASSKEY=${MPESA_PASSKEY}
-      - MPESA_SHORTCODE=${MPESA_SHORTCODE}
-      - MPESA_CALLBACK_URL=${MPESA_CALLBACK_URL}
-      - MPESA_ENV=${MPESA_ENV:-sandbox}
     volumes:
       - ./logs:/app/logs
-      # Mount models for persistence
+      # Mount models for persistence (read-only)
       - ./volatility_forecaster.joblib:/app/volatility_forecaster.joblib:ro
       - ./volatility_forecaster_v2_enhanced.joblib:/app/volatility_forecaster_v2_enhanced.joblib:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
@@ -41,9 +35,6 @@ services:
       start_period: 10s
     networks:
       - options-network
-    # Uncomment if using local MongoDB
-    # depends_on:
-    #   - mongodb
 
   # Optional: Local MongoDB (uncomment if needed)
   # mongodb:
@@ -53,7 +44,7 @@ services:
   #     - "27017:27017"
   #   environment:
   #     - MONGO_INITDB_ROOT_USERNAME=root
-  #     - MONGO_INITDB_ROOT_PASSWORD=ecoville
+  #     - MONGO_INITDB_ROOT_PASSWORD=changeme
   #     - MONGO_INITDB_DATABASE=options_pricer
   #   volumes:
   #     - mongodb_data:/data/db
@@ -83,4 +74,3 @@ networks:
 
 volumes:
   mongodb_data:
-
