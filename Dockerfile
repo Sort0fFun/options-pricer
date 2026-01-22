@@ -14,11 +14,8 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# Install runtime system dependencies and create non-root user
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd -m -u 1000 appuser
+# Create non-root user (no apt-get needed)
+RUN useradd -m -u 1000 appuser
 
 # Copy installed Python packages from builder
 COPY --from=builder /root/.local /home/appuser/.local
