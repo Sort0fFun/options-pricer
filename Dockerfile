@@ -34,10 +34,10 @@ ENV FLASK_HOST=0.0.0.0
 ENV FLASK_PORT=5001
 
 # Expose Flask port
-EXPOSE 5001
+EXPOSE 4006
 
 # Switch to non-root user
 USER appuser
 
 # Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "4", "--threads", "2", "--timeout", "120", "flask_app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:4006", "--workers", "4", "--threads", "2", "--timeout", "120", "flask_app:app"]
